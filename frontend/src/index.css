@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@font-face {
+  font-family: 'Ethnocentric';
+  src: url('/fonts/FC-Ethnocentric-Rg.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+
+body {
+  font-family: 'Ethnocentric', sans-serif;
+}
+
+
+.cursor-custom1 {
+  cursor: url('./assets/cursors/cursor_01.png'), auto;
+}
+
+.cursor-custom2 {
+  cursor: url('./assets/cursors/cursor_02.png'), auto;
+}
+
+.cursor-custom3 {
+  cursor: url('./assets/cursors/cursor_03.png'), auto;
+}
+
+button {
+  cursor: url('./assets/cursors/cursor_02.png'), auto;
+}
