@@ -1,5 +1,12 @@
 import React from "react";
 import bgVideo from "../assets/videos/home.mp4";
+import avatarFrame from "../assets/images/avatarFrame.png";
+import avatar from "../assets/images/avatar.png";
+import infoFrame from "../assets/images/infoFrame.png";
+import rubystarlight from "../assets/icons/rubystarlight.png";
+import credit from "../assets/icons/credit.png";
+import borderFrame from "../assets/images/borderFrame.png";
+import borderFrame2 from "../assets/images/borderFrame2.png";
 
 const Home = () => {
   return (
@@ -14,29 +21,107 @@ const Home = () => {
       />
 
       {/* LƯỚI 3x3 */}
-      <div className="relative z-10 w-full h-full grid grid-rows-[2fr_8fr_2fr] grid-cols-[3fr_6fr_3fr] gap-1 p-2">
+      <div className="relative z-10 w-full h-full grid grid-rows-[2fr_8fr_2fr] grid-cols-[3fr_6fr_3fr] gap-1 p-2 lg:p-5 lg:gap-10">
+
         {/* BOX 1: Góc trên trái (gradient từ trái & trên) */}
-        <div className="box-1 bg-gradient-to-br from-black/60 to-transparent border border-white" />
+        <div className="box-1 flex bg-gradient-to-br from-black/60 to-transparent overflow-hidden max-w-full">
+          {/* BOX-1A: AVATAR */}
+          <div className="box-1a items-center justify-center w-[30%] h-full relative flex-shrink-0">
+            <img
+              src={avatarFrame}
+              alt="Avatar Frame"
+              className="absolute inset-0  w-full object-cover z-10 pointer-events-none"
+            />
+            <img
+              src={avatar}
+              alt="Avatar"
+              className="absolute inset-0 w-full object-cover z-0 pointer-events-none"
+            />
+          </div>
 
-        {/* BOX 2: Trên giữa (gradient từ trên) */}
-        <div className="box-2 bg-gradient-to-b from-black/60 to-transparent border border-white" />
+          {/* BOX-1B: INFO */}
+          <div className="box-1b relative flex-1 h-full w-full">
+            <img
+              src={infoFrame}
+              alt="Info Frame"
+              className="w-full h-full object-contain pointer-events-none"
+            />
+            <div className="absolute inset-0 flex flex-col justify-center px-2 text-white leading-tight overflow-hidden">
 
-        {/* BOX 3: Góc trên phải (gradient từ phải & trên) */}
-        <div className="box-3 bg-gradient-to-bl from-black/60 to-transparent border border-white" />
+              <div className="sm:text-sm lg:text-xl font-bold truncate">AFK</div>
+              <div className="sm:text-[60%] lg:text-xl opacity-80 truncate">UID: 12345678</div>
+            </div>
+          </div>
+        </div>
 
-{/* BOX 4 */}
-<div className="box-4 flex items-start justify-start">
-  <div className="bg-gradient-to-r from-black/60 to-transparent border border-white h-full aspect-[1/4] relative">
-    {/* PHẦN TRÊN - 1/4 chiều cao */}
-    <div className="absolute top-0 left-0 h-1/4 w-full border border-yellow-400" />
-  </div>
-</div>
+        {/* BOX 2: Trên giữa (gradient từ trên, giảm 50% chiều cao, căn lên) */}
+        <div className="box-2 self-start h-1/2 bg-gradient-to-b from-black/60 to-transparent flex items-center justify-center gap-2  text-black text-[80%] font-sans font-bold lg:text-base drop-shadow-[0_0_8px_rgba(0,200,255,0.8)]">
+          {/* Ô 1: Tín dụng */}
+          <div
+            className="relative flex items-center justify-center gap-1"
+            style={{
+              width: "25%", // 1/4 chiều rộng box-2
+              aspectRatio: "4 / 1", // giữ tỉ lệ ngang đẹp
+            }}
+          >
+            {/* Viền PNG */}
+            <img
+              src={borderFrame} // hoặc file PNG viền riêng cho tiền
+              alt="frame"
+              className="absolute inset-0  w-full h-full z-0"
+            />
+            {/* Nội dung */}
+            <img
+              src={credit}
+              alt="credit"
+              className="h-full object-contain drop-shadow-[0_0_4px_rgba(0,190,255,0.8)] z-10"
+            />
+            <span className="z-10 drop-shadow-[0_0_10px_rgba(255,255,255,1)]">1000</span>
+          </div>
+
+          {/* Ô 2: Ruby */}
+          <div
+            className="relative flex items-center justify-center gap-1"
+            style={{
+              width: "25%",
+              aspectRatio: "4 / 1",
+            }}
+          >
+            {/* Viền PNG */}
+            <img
+              src={borderFrame2}
+              alt="frame2"
+              className="absolute inset-0 h-full w-full z-0"
+            />
+            {/* Nội dung */}
+            <img
+              src={rubystarlight}
+              alt="rubystarlight"
+              className="h-full object-contain drop-shadow-[0_0_6px_rgba(255,0,0,0.8)] z-10"
+            />
+            <span className="z-10">500</span>
+          </div>
+        </div>
+
+
+
+        {/* BOX 3: Góc trên phải (gradient từ phải & trên, giảm 50% chiều cao, căn lên) */}
+        <div className="box-3 self-start h-1/2 bg-gradient-to-bl from-black/60 to-transparent border border-white" />
+
+
+        {/* BOX 4 */}
+        <div className="box-4 flex items-start justify-start">
+          <div className="bg-gradient-to-r from-black/60 to-transparent border border-white h-full aspect-[1/4] relative">
+            {/* PHẦN TRÊN - 1/4 chiều cao */}
+            <div className="absolute top-0 left-0 h-1/4 w-full border border-yellow-400" />
+          </div>
+        </div>
 
 
         {/* BOX 5: Giữa giữa (trống, không viền) */}
         <div className="box-5" />
 
-         {/* BOX 6 → chứa 2 phần, mỗi phần = 1/3 chiều cao */}
+        {/* BOX 6 → chứa 2 phần, mỗi phần = 1/3 chiều cao */}
         <div className="box-6 flex flex-col justify-start h-full">
           {/* 6.1 */}
           <div className="box-6-1 h-1/3 bg-gradient-to-l from-black/60 to-transparent border border-white mb-2 flex items-center justify-center text-white">

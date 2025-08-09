@@ -18,7 +18,7 @@ function App() {
   };
 
   return (
-    <div className="cursor-custom1 fixed inset-0 border-4 border-blue-500 bg-black bg-opacity-50 items-center justify-center lg:px-0 p-0">
+    <div className="cursor-custom1 fixed inset-0 items-center justify-center">
 
 
       <OrientationLock>
