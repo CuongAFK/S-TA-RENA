@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import bgVideo from "../assets/videos/home.mp4";
 import avatarFrame from "../assets/images/avatarFrame.png";
 import avatar from "../assets/images/avatar.png";
@@ -7,8 +7,25 @@ import rubystarlight from "../assets/icons/rubystarlight.png";
 import credit from "../assets/icons/credit.png";
 import borderFrame from "../assets/images/borderFrame.png";
 import borderFrame2 from "../assets/images/borderFrame2.png";
+import shopIcon from "../assets/icons/shop.png";
+import mailIcon from "../assets/icons/mail.png";
+import settingsIcon from "../assets/icons/settings.png";
+import moreIcon from "../assets/icons/more.png";
+import AccountModal from "../components/AccountModal";
+
 
 const Home = () => {
+
+  const [isModalOpen, setModalOpen] = useState(false);
+
+  const handleAvatarClick = () => {
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  }
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* VIDEO NỀN */}
@@ -26,7 +43,7 @@ const Home = () => {
         {/* BOX 1: Góc trên trái (gradient từ trái & trên) */}
         <div className="box-1 flex bg-gradient-to-br from-black/60 to-transparent overflow-hidden max-w-full">
           {/* BOX-1A: AVATAR */}
-          <div className="box-1a items-center justify-center w-[30%] h-full relative flex-shrink-0">
+          <div className="box-1a items-center justify-center w-[30%] h-full relative flex-shrink-0" onClick={handleAvatarClick}>
             <img
               src={avatarFrame}
               alt="Avatar Frame"
@@ -105,15 +122,45 @@ const Home = () => {
 
 
 
-        {/* BOX 3: Góc trên phải (gradient từ phải & trên, giảm 50% chiều cao, căn lên) */}
-        <div className="box-3 self-start h-1/2 bg-gradient-to-bl from-black/60 to-transparent border border-white" />
+        {/* BOX 3: Góc trên phải */}
+        <div className="box-3 bg-gradient-to-bl from-black/60 to-transparent 
+                flex items-center justify-center gap-5 px-[1rem] py-1 h-1/2 lg:px-[2rem] lg:gap-10">
+          {/* Shop */}
+          <img
+            src={shopIcon}
+            alt="Shop"
+            className="h-full w-10  btn"
+          />
+
+          {/* Thư */}
+          <img
+            src={mailIcon}
+            alt="Mail"
+            className="h-auto w-5 lg:w-10 btn"
+          />
+
+          {/* Cài đặt */}
+          <img
+            src={settingsIcon}
+            alt="Settings"
+            className="h-auto w-5 lg:w-10 btn"
+          />
+
+          {/* More */}
+          <img
+            src={moreIcon}
+            alt="More"
+            className="h-auto w-5 lg:w-10 btn"
+          />
+
+        </div>
+
 
 
         {/* BOX 4 */}
         <div className="box-4 flex items-start justify-start">
           <div className="bg-gradient-to-r from-black/60 to-transparent border border-white h-full aspect-[1/4] relative">
-            {/* PHẦN TRÊN - 1/4 chiều cao */}
-            <div className="absolute top-0 left-0 h-1/4 w-full border border-yellow-400" />
+
           </div>
         </div>
 
@@ -142,9 +189,15 @@ const Home = () => {
 
         {/* BOX 9: Góc dưới phải (gradient từ phải & dưới) */}
         <div className="box-9 bg-gradient-to-tl from-black/60 to-transparent border border-white" />
-      </div>
-    </div>
+      </div >
+
+      {/* Hiển thị Modal */}
+        <AccountModal isOpen={isModalOpen} onClose={handleCloseModal} />
+
+    </div >
+
   );
 };
+
 
 export default Home;

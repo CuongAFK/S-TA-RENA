@@ -28,3 +28,7 @@ body {
 button {
   cursor: url('./assets/cursors/cursor_02.png'), auto;
 }
+
+.btn {
+  cursor: url('./assets/cursors/cursor_02.png'), auto;
+}
