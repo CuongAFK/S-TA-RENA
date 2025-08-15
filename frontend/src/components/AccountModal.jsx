@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import avatarFrame from "../assets/images/avatarFrame.png";
 import avatar from "../assets/images/avatar.png";
 import { X, UserPlus, Edit3, Image, Frame, LogIn, Eye, EyeOff } from "lucide-react";
 import { Turnstile } from '@marsidev/react-turnstile';
 
 const API_URL = "https://api-proxy.bbao12345321c.workers.dev/";
-const SECRET_TOKEN = 'Hacker-Is-Gay'; 
-const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc'; 
+const SECRET_TOKEN = 'Hacker-Is-Gay'; // Giữ để tương lai
+const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc'; // Giữ để test sau
 
 const AccountModal = ({ isOpen, onClose }) => {
   const [showRegister, setShowRegister] = useState(false);
@@ -16,7 +16,13 @@ const AccountModal = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState("fake-token-123456"); // Token giả để test
+
+  // Log trạng thái Turnstile
+  useEffect(() => {
+    console.log('Turnstile token updated:', turnstileToken);
+  }, [turnstileToken]);
+
   if (!isOpen) return null;
 
   const menuItems = [
@@ -30,18 +36,22 @@ const AccountModal = ({ isOpen, onClose }) => {
   const validateInputs = () => {
     if (username.length < 3 || username.length > 12) {
       setMessage("Tên đăng nhập phải từ 3 đến 12 ký tự!");
+      console.log('Validation failed: Invalid username length');
       return false;
     }
     if (password.length < 8 || !/[a-zA-Z]/.test(password)) {
       setMessage("Mật khẩu phải từ 8 ký tự và chứa ít nhất 1 chữ cái!");
+      console.log('Validation failed: Invalid password');
       return false;
     }
     if (password !== confirmPassword) {
       setMessage("Mật khẩu nhập lại không khớp!");
+      console.log('Validation failed: Passwords do not match');
       return false;
     }
     if (!turnstileToken) {
       setMessage("Vui lòng xác thực CAPTCHA!");
+      console.log('Validation failed: No Turnstile token');
       return false;
     }
     return true;
@@ -54,21 +64,26 @@ const AccountModal = ({ isOpen, onClose }) => {
     setMessage("");
 
     try {
+      console.log('Sending request with body:', {
+        action: "register",
+        uid: null,
+        name: username,
+        password,
+        captchaToken: turnstileToken
+      });
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SECRET_TOKEN}`
-        },
+        headers: { "Content-Type": "application/json" }, // Tạm bỏ Authorization
         body: JSON.stringify({
           action: "register",
-          uid: null, // Server sẽ generate UID
+          uid: null,
           name: username,
           password,
           captchaToken: turnstileToken
         }),
       });
       const data = await res.json();
+      console.log('Server response:', data);
       setMessage(data.message || "Đăng ký thành công!");
 
       if (data.success) {
@@ -76,7 +91,7 @@ const AccountModal = ({ isOpen, onClose }) => {
         document.cookie = `authToken=${authToken}; max-age=86400; path=/; secure; samesite=strict`;
       }
     } catch (err) {
-      console.error(err);
+      console.error('Fetch error:', err);
       setMessage("Có lỗi xảy ra khi kết nối!");
     }
 
@@ -86,7 +101,6 @@ const AccountModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50 p-2">
       <div className="bg-black/80 rounded-2xl shadow-2xl w-full max-w-2xl h-full lg:h-100 p-5">
-
         {/* Header */}
         <div className="flex items-center justify-between px-6">
           <h2 className="text-2xl font-bold text-white">Tài Khoản</h2>
@@ -98,7 +112,7 @@ const AccountModal = ({ isOpen, onClose }) => {
         <div className="flex h-80">
           {/* Cột trái */}
           <div className="flex-1 px-6 pr-3">
-            <div className="bg-gradient-to-r h-70 from-blue-500/50 to-purple-600/50 rounded-xl p-2 text-white ">
+            <div className="bg-gradient-to-r h-70 from-blue-500/50 to-purple-600/50 rounded-xl p-2 text-white">
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="relative mb-4">
                   <div className="relative w-40 h-40">
@@ -135,7 +149,7 @@ const AccountModal = ({ isOpen, onClose }) => {
                 </div>
                 <div className="border-t border-amber-300">
                   <p className="text-xs text-gray-400 text-center mt-2">
-                    v2.1.0 • 10/08/2025
+                    v2.1.0 • {new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })}
                   </p>
                 </div>
               </div>
@@ -199,7 +213,21 @@ const AccountModal = ({ isOpen, onClose }) => {
 
                   <Turnstile
                     siteKey={TURNSTILE_SITE_KEY}
-                    onVerify={(token) => setTurnstileToken(token)}
+                    onVerify={(token) => {
+                      console.log('Turnstile verified, token:', token);
+                      setTurnstileToken(token);
+                    }}
+                    onError={(error) => {
+                      console.log('Turnstile error:', error);
+                      setMessage("Lỗi CAPTCHA: Vui lòng thử lại!");
+                    }}
+                    onExpire={() => {
+                      console.log('Turnstile token expired');
+                      setTurnstileToken(null);
+                      setMessage("CAPTCHA hết hạn, vui lòng thử lại!");
+                    }}
+                    retry="auto"
+                    refreshExpired="auto"
                   />
 
                   {message && (
