@@ -212,10 +212,10 @@ const AccountModal = ({ isOpen, onClose }) => {
                   <Turnstile
                     siteKey={TURNSTILE_SITE_KEY}
                     onSuccess={(token) => {
-                      console.log('Turnstile success, token:', token);
+                      // console.log('Turnstile success, token:', token);
                       setTurnstileToken(token);
                     }}
-                    onWidgetLoad={(id) => console.log('Turnstile widget loaded with id:', id)}
+                    // onWidgetLoad={(id) => console.log('Turnstile widget loaded with id:', id)}
                     onError={(err) => {
                       console.log('Turnstile error:', err);
                       setMessage("Lỗi CAPTCHA: Vui lòng thử lại!");
