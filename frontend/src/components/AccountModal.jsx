@@ -4,9 +4,9 @@ import avatar from "../assets/images/avatar.png";
 import { X, UserPlus, Edit3, Image, Frame, LogIn, Eye, EyeOff } from "lucide-react";
 import { Turnstile } from '@marsidev/react-turnstile';
 
-const API_URL = "https://api-proxy.bbao12345321c.workers.dev/";
+const API_URL = "https://api-proxy.bbao12345321c.workers.dev/api/submit";
 const SECRET_TOKEN = 'Hacker-Is-Gay'; // Giữ để tương lai
-const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc'; // Giữ để test sau
+const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc'; // Thay bằng key mới
 
 const AccountModal = ({ isOpen, onClose }) => {
   const [showRegister, setShowRegister] = useState(false);
@@ -16,12 +16,11 @@ const AccountModal = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("fake-token-123456"); // Token giả để test
+  const [turnstileToken, setTurnstileToken] = useState(null);
 
-  // Log trạng thái Turnstile
-  useEffect(() => {
-    console.log('Turnstile token updated:', turnstileToken);
-  }, [turnstileToken]);
+  // useEffect(() => {
+  //   console.log('Turnstile token updated:', turnstileToken);
+  // }, [turnstileToken]);
 
   if (!isOpen) return null;
 
@@ -49,9 +48,8 @@ const AccountModal = ({ isOpen, onClose }) => {
       console.log('Validation failed: Passwords do not match');
       return false;
     }
-    if (!turnstileToken) {
+    if (!turnstileToken || turnstileToken.length < 10) {
       setMessage("Vui lòng xác thực CAPTCHA!");
-      console.log('Validation failed: No Turnstile token');
       return false;
     }
     return true;
@@ -64,16 +62,16 @@ const AccountModal = ({ isOpen, onClose }) => {
     setMessage("");
 
     try {
-      console.log('Sending request with body:', {
-        action: "register",
-        uid: null,
-        name: username,
-        password,
-        captchaToken: turnstileToken
-      });
+      // console.log('Sending request with body:', {
+      //   action: "register",
+      //   uid: null,
+      //   name: username,
+      //   password,
+      //   captchaToken: turnstileToken
+      // });
       const res = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }, // Tạm bỏ Authorization
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "register",
           uid: null,
@@ -83,7 +81,7 @@ const AccountModal = ({ isOpen, onClose }) => {
         }),
       });
       const data = await res.json();
-      console.log('Server response:', data);
+      // console.log('Server response:', data);
       setMessage(data.message || "Đăng ký thành công!");
 
       if (data.success) {
@@ -213,12 +211,13 @@ const AccountModal = ({ isOpen, onClose }) => {
 
                   <Turnstile
                     siteKey={TURNSTILE_SITE_KEY}
-                    onVerify={(token) => {
-                      console.log('Turnstile verified, token:', token);
+                    onSuccess={(token) => {
+                      console.log('Turnstile success, token:', token);
                       setTurnstileToken(token);
                     }}
-                    onError={(error) => {
-                      console.log('Turnstile error:', error);
+                    onWidgetLoad={(id) => console.log('Turnstile widget loaded with id:', id)}
+                    onError={(err) => {
+                      console.log('Turnstile error:', err);
                       setMessage("Lỗi CAPTCHA: Vui lòng thử lại!");
                     }}
                     onExpire={() => {
@@ -229,6 +228,7 @@ const AccountModal = ({ isOpen, onClose }) => {
                     retry="auto"
                     refreshExpired="auto"
                   />
+
 
                   {message && (
                     <p className="text-sm text-red-400 bg-red-900/20 p-2 rounded-lg text-center">{message}</p>
