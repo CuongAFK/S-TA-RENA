@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import bgVideo from "../assets/videos/home.mp4";
 import avatarFrame from "../assets/images/avatarFrame.png";
 import avatar from "../assets/images/avatar.png";
@@ -17,6 +17,20 @@ import AccountModal from "../components/AccountModal";
 const Home = () => {
 
   const [isModalOpen, setModalOpen] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const encodedData = localStorage.getItem("userData");
+    if (encodedData) {
+      try {
+        const decoded = JSON.parse(atob(encodedData));
+        setUserData(decoded);
+      } catch (e) {
+        console.error("Lỗi giải mã user:", e);
+      }
+    }
+  }, []);
+
 
   const handleAvatarClick = () => {
     setModalOpen(true);
@@ -65,8 +79,12 @@ const Home = () => {
             />
             <div className="absolute inset-0 flex flex-col justify-center px-2 text-white leading-tight overflow-hidden">
 
-              <div className="sm:text-sm lg:text-xl font-bold truncate">AFK</div>
-              <div className="sm:text-[60%] lg:text-xl opacity-80 truncate">UID: 12345678</div>
+              <div className="sm:text-sm lg:text-xl font-bold truncate">
+                {userData ? userData.name : "AFK"}
+              </div>
+              <div className="sm:text-[60%] lg:text-xl opacity-80 truncate">
+                UID: {userData ? userData.uid : "12345678"}
+              </div>
             </div>
           </div>
         </div>
@@ -192,7 +210,12 @@ const Home = () => {
       </div >
 
       {/* Hiển thị Modal */}
-        <AccountModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <AccountModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onLoginSuccess={(user) => setUserData(user)}
+      />
+
 
     </div >
 

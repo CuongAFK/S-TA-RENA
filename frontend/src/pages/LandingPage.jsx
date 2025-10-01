@@ -73,7 +73,7 @@ const LandingPage = () => {
     >
       {/* Video nền */}
       <video
-        ref={videoRef} // 👈 Gắn ref ở đây
+        ref={videoRef}
         className="absolute top-0 left-0 w-full h-full object-cover"
         src={bgVideo}
         autoPlay
