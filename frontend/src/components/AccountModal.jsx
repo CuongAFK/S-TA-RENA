@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import avatarFrame from "../assets/images/avatarFrame.png";
-import avatar from "../assets/images/avatar.png";
 import { X, UserPlus, Edit3, Image, Frame, LogIn, Eye, EyeOff } from "lucide-react";
 import { Turnstile } from '@marsidev/react-turnstile';
+import avatar from "../assets/images/avatar.png";
+
+const avatarModules = import.meta.glob("../assets/images/avt/avt-*.jpg", {
+  eager: true,
+  import: "default",
+});
+
+
 
 const API_URL = "https://api-proxy.bbao12345321c.workers.dev/api/submit";
-const SECRET_TOKEN = 'Hacker-Is-Gay'; // Giữ để tương lai
-const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc'; // Thay bằng key mới
+const SECRET_TOKEN = 'Hacker-Is-Gay';
+const TURNSTILE_SITE_KEY = '0x4AAAAAABqyLJTkjeZ9mYrc';
 
 const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [showForm, setShowForm] = useState("menu"); // menu | register | login
+  const [selectedKey, setSelectedKey] = useState(null);
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -18,10 +26,29 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState(null);
+  const [avatarSrc, setAvatarSrc] = useState(avatar);
+  const [activeTab, setActiveTab] = useState("HSR");
+  const [newName, setNewName] = useState(user?.name || "");
 
-  // useEffect(() => {
-  //   console.log('Turnstile token updated:', turnstileToken);
-  // }, [turnstileToken]);
+
+
+
+
+  // Chuyển thành mảng {idx, key, url} rồi sort theo số
+  const allAvatars = Object.entries(avatarModules)
+    .map(([path, url]) => {
+      const m = path.match(/avt-(\d+)\.jpg$/);
+      if (!m) return null;
+      const idx = Number(m[1]);
+      return { idx, key: `avt-${idx}.jpg`, url };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.idx - b.idx);
+
+  // Chia HSR (1–20) và AOV (21–40)
+  const avatarsHSR = allAvatars.filter(a => a.idx <= 20);
+  const avatarsAOV = allAvatars.filter(a => a.idx > 20);
+
 
   useEffect(() => {
     const saved = localStorage.getItem("userData");
@@ -42,9 +69,17 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setUser(null);
   };
 
+
+
   const menuItems = [
     { icon: Edit3, label: "Thay tên", color: "text-purple-600", bgColor: "hover:bg-purple-50" },
-    { icon: Image, label: "Thay avatar", color: "text-pink-600", bgColor: "hover:bg-pink-50" },
+    {
+      icon: Image,
+      label: "Thay avatar",
+      color: "text-pink-600",
+      bgColor: "hover:bg-pink-50",
+      action: () => setShowForm("avatar")
+    },
     { icon: Frame, label: "Thay viền", color: "text-orange-600", bgColor: "hover:bg-orange-50" },
 
     // ✅ Nhấn "Đăng nhập" => đăng xuất rồi mở form
@@ -198,7 +233,15 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 <div className="relative mb-4">
                   <div className="relative w-40 h-40">
                     <img src={avatarFrame} alt="Avatar Frame" className="absolute inset-0 w-full h-full object-cover z-10" />
-                    <img src={avatar} alt="Avatar" className="absolute inset-0 w-full h-full object-cover z-0" />
+                    <img
+                      src={
+                        selectedKey
+                          ? avatarModules[`../assets/images/avt/${selectedKey}`]
+                          : user?.avatar || avatarSrc || avatar
+                      }
+                      alt="Avatar"
+                      className="absolute inset-0 w-full h-full object-cover z-0"
+                    />
                   </div>
                 </div>
                 <h3 className="text-2xl font-bold mb-2">{user ? user.name : "AFK"}</h3>
@@ -312,7 +355,90 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   </div>
                 </div>
               </div>
+            )}{showForm === "avatar" && (
+              <div className="text-white p-4 h-[300px] flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setShowForm("menu")}
+                      className="px-6 py-1 text-sm bg-gray-500 rounded"
+                    >
+                      Quay lại
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!selectedKey) return;
+                        const encoded = localStorage.getItem("userData");
+                        const data = encoded ? JSON.parse(atob(encoded)) : {};
+                        data.avatarKey = selectedKey;
+                        localStorage.setItem("userData", btoa(JSON.stringify(data)));
+                        onLoginSuccess && onLoginSuccess(data);
+                        setShowForm("menu");
+                      }}
+                      className="px-5 py-1 text-sm bg-green-500 rounded disabled:opacity-50"
+                      disabled={!selectedKey}
+                    >
+                      Lưu
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-5 mb-3">
+                  <button
+                    onClick={() => setActiveTab("HSR")}
+                    className={`px-4 py-0 rounded text-sm border-2 bg-blue-300/50 ${activeTab === "HSR"
+                      ? "bg-green-400/50 ring-1 ring-white text-white"
+                      : "text-gray-400 hover:bg-white/90"
+                      }`}
+                  >
+                    HSR
+                  </button>
+                  <h1 className="text-[30px]">|</h1>
+                  <button
+                    onClick={() => setActiveTab("AOV")}
+                    className={`px-4 py-0 rounded text-sm border-2 bg-blue-300/50 ${activeTab === "AOV"
+                      ? "bg-green-400/50 ring-1 ring-white text-white"
+                      : "text-gray-400 hover:bg-white/90"
+                      }`}
+                  >
+                    AOV
+                  </button>
+                </div>
+
+                {/* Scroll container */}
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 gap-1">
+                    {(activeTab === "HSR" ? avatarsHSR : avatarsAOV).map(({ key, url }) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedKey(key)}
+                        aria-pressed={selectedKey === key}
+                        className={`relative bg-gradient-to-r from-blue-500 to-purple-600
+              overflow-hidden transition-all duration-300 ease-in-out
+              shadow-md shadow-blue-500/50 hover:shadow-lg hover:shadow-purple-500/70
+              hover:scale-105 before:absolute before:top-0 before:left-[-100%]
+              before:w-full before:h-full before:bg-white/20 before:skew-x-[-30deg]
+              before:transition-all before:duration-500 hover:before:left-[100%]
+              focus:outline-none p-1 rounded-lg border
+              ${selectedKey === key ? "border-white/70" : "border-white/20"}`}
+                      >
+                        <img
+                          src={url}
+                          alt={key}
+                          className="w-full h-24 object-cover rounded-md"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
+
+
+
+
+
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import bgVideo from "../assets/videos/home.mp4";
 import avatarFrame from "../assets/images/avatarFrame.png";
-import avatar from "../assets/images/avatar.png";
 import infoFrame from "../assets/images/infoFrame.png";
 import rubystarlight from "../assets/icons/rubystarlight.png";
 import credit from "../assets/icons/credit.png";
@@ -12,10 +11,25 @@ import mailIcon from "../assets/icons/mail.png";
 import settingsIcon from "../assets/icons/settings.png";
 import moreIcon from "../assets/icons/more.png";
 import AccountModal from "../components/AccountModal";
+import avatar from "../assets/images/avatar.png";
+
+
+const avatarModules = import.meta.glob("../assets/images/avt/avt-*.jpg", {
+  eager: true,
+  import: "default",
+});
+const AVATAR_URL_BY_KEY = Object.fromEntries(
+  Object.entries(avatarModules).map(([path, url]) => {
+    const m = path.match(/(avt-\d+\.jpg)$/);
+    return [m ? m[1] : path, url];
+  })
+);
+
 
 
 const Home = () => {
 
+  const [avatarSrc, setAvatarSrc] = useState(avatar); // default
   const [isModalOpen, setModalOpen] = useState(false);
   const [userData, setUserData] = useState(null);
 
@@ -28,6 +42,19 @@ const Home = () => {
       } catch (e) {
         console.error("Lỗi giải mã user:", e);
       }
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("userData");
+    if (!saved) return;
+    const decoded = JSON.parse(atob(saved));
+    setUserData(decoded);
+
+    // Nếu có avatarKey thì map sang URL; không thì dùng mặc định
+    if (decoded.avatarKey) {
+      const url = AVATAR_URL_BY_KEY[decoded.avatarKey];
+      if (url) setAvatarSrc(url);
     }
   }, []);
 
@@ -57,17 +84,19 @@ const Home = () => {
         {/* BOX 1: Góc trên trái (gradient từ trái & trên) */}
         <div className="box-1 flex bg-gradient-to-br from-black/60 to-transparent overflow-hidden max-w-full">
           {/* BOX-1A: AVATAR */}
-          <div className="box-1a items-center justify-center w-[30%] h-full relative flex-shrink-0" onClick={handleAvatarClick}>
+          <div className="box-1a items-center justify-center w-[31%] h-full relative flex-shrink-0" onClick={handleAvatarClick}>
             <img
               src={avatarFrame}
               alt="Avatar Frame"
               className="absolute inset-0  w-full object-cover z-10 pointer-events-none"
             />
             <img
-              src={avatar}
+              src={avatarSrc}
               alt="Avatar"
               className="absolute inset-0 w-full object-cover z-0 pointer-events-none"
             />
+
+
           </div>
 
           {/* BOX-1B: INFO */}
@@ -213,8 +242,15 @@ const Home = () => {
       <AccountModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onLoginSuccess={(user) => setUserData(user)}
+        onLoginSuccess={(data) => {
+          setUserData(data);
+          if (data.avatarKey) {
+            const url = AVATAR_URL_BY_KEY[data.avatarKey];
+            if (url) setAvatarSrc(url);
+          }
+        }}
       />
+
 
 
     </div >
