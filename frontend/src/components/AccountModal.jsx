@@ -9,6 +9,12 @@ const avatarModules = import.meta.glob("../assets/images/avt/avt-*.jpg", {
   import: "default",
 });
 
+const frameModules = import.meta.glob("../assets/images/frame/frame-*.png", {
+  eager: true,
+  import: "default",
+});
+
+
 
 
 const API_URL = "https://api-proxy.bbao12345321c.workers.dev/api/submit";
@@ -28,7 +34,10 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [turnstileToken, setTurnstileToken] = useState(null);
   const [avatarSrc, setAvatarSrc] = useState(avatar);
   const [activeTab, setActiveTab] = useState("HSR");
-  const [newName, setNewName] = useState(user?.name || "");
+  const [newName, setNewName] = useState("");
+  const [selectedFrameKey, setSelectedFrameKey] = useState(null);
+
+
 
 
 
@@ -50,12 +59,31 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const avatarsAOV = allAvatars.filter(a => a.idx > 20);
 
 
+  const allFrames = Object.entries(frameModules)
+    .map(([path, url]) => {
+      const m = path.match(/frame-(\d+)\.png$/);
+      if (!m) return null;
+      const idx = Number(m[1]);
+      return { idx, key: `frame-${idx}.png`, url };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.idx - b.idx);
+
+
+
+
+
   useEffect(() => {
     const saved = localStorage.getItem("userData");
     if (saved) {
       try {
         const decoded = JSON.parse(atob(saved));
         setUser(decoded);
+        setNewName(decoded.name || "");
+        if (decoded.frameKey) {
+          setSelectedFrameKey(decoded.frameKey);
+        }
+
       } catch (e) {
         console.error("Decode lỗi:", e);
       }
@@ -67,12 +95,21 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const handleLogout = () => {
     localStorage.removeItem("userData");
     setUser(null);
+    onLoginSuccess && onLoginSuccess(null); // ✅ Reset bên HomePage
+    setShowForm("menu");
   };
 
 
 
+
   const menuItems = [
-    { icon: Edit3, label: "Thay tên", color: "text-purple-600", bgColor: "hover:bg-purple-50" },
+    {
+      icon: Edit3,
+      label: "Thay tên",
+      color: "text-purple-600",
+      bgColor: "hover:bg-purple-50",
+      action: () => setShowForm("rename")
+    },
     {
       icon: Image,
       label: "Thay avatar",
@@ -80,7 +117,14 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
       bgColor: "hover:bg-pink-50",
       action: () => setShowForm("avatar")
     },
-    { icon: Frame, label: "Thay viền", color: "text-orange-600", bgColor: "hover:bg-orange-50" },
+    {
+      icon: Frame,
+      label: "Thay viền",
+      color: "text-orange-600",
+      bgColor: "hover:bg-orange-50",
+      action: () => setShowForm("frame")
+    },
+
 
     // ✅ Nhấn "Đăng nhập" => đăng xuất rồi mở form
     {
@@ -175,6 +219,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setMessage("");
 
     try {
+      // Bước 1: Đăng nhập
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,29 +233,62 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
       const data = await res.json();
 
       if (data.success) {
-        // Tạo object để lưu
-        const userData = { uid: data.uid, name: data.name };
+        // ✅ Bước 2: Lấy thêm avatar, frame từ DB
+        const profileRes = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "getUser",
+            uid: data.uid
+          }),
+        });
 
-        // Mã hóa Base64
-        const encodedData = btoa(JSON.stringify(userData));
+        const profile = await profileRes.json();
 
-        // Lưu vào localStorage
-        localStorage.setItem("userData", encodedData);
+        if (profile.success) {
+          // ✅ Lưu đầy đủ vào localStorage
+          localStorage.setItem("userData", btoa(JSON.stringify(profile)));
 
-        setUser(userData);
-        onLoginSuccess && onLoginSuccess(userData);
-        setMessage("Đăng nhập thành công!");
-        setShowForm("menu");
-      }
-      else {
+          // ✅ Cập nhật UI
+          setUser(profile);
+          onLoginSuccess && onLoginSuccess(profile);
+          setMessage("Đăng nhập thành công!");
+          setShowForm("menu");
+        } else {
+          setMessage("Không thể tải dữ liệu người dùng!");
+        }
+      } else {
         setMessage(data.message || "Sai thông tin đăng nhập!");
       }
-    } catch {
+    } catch (error) {
       setMessage("Có lỗi xảy ra khi kết nối!");
     }
 
     setLoading(false);
   };
+
+
+  const updateProfile = async (updates) => {
+    if (!user?.uid) return;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          uid: user.uid,
+          ...updates
+        }),
+      });
+
+      const result = await res.json();
+      console.log("Update result:", result);
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  };
+
 
 
 
@@ -230,21 +308,50 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
           <div className="flex-1 px-6 pr-3">
             <div className="bg-gradient-to-r h-70 from-blue-500/50 to-purple-600/50 rounded-xl p-2 text-white">
               <div className="flex flex-col items-center justify-center h-full">
-                <div className="relative mb-4">
-                  <div className="relative w-40 h-40">
-                    <img src={avatarFrame} alt="Avatar Frame" className="absolute inset-0 w-full h-full object-cover z-10" />
-                    <img
-                      src={
-                        selectedKey
-                          ? avatarModules[`../assets/images/avt/${selectedKey}`]
-                          : user?.avatar || avatarSrc || avatar
-                      }
-                      alt="Avatar"
-                      className="absolute inset-0 w-full h-full object-cover z-0"
-                    />
-                  </div>
+
+                {/* Avatar + Frame */}
+                <div className="relative w-40 h-40 mb-4 flex justify-center items-center">
+
+                  {/* Avatar nằm dưới */}
+                  <img
+                    src={
+                      selectedKey
+                        ? avatarModules[`../assets/images/avt/${selectedKey}`]
+                        : (user?.avatarKey ? avatarModules[`../assets/images/avt/${user.avatarKey}`] : avatar)
+                    }
+                    alt="Avatar"
+                    className="
+            absolute
+            w-[75%] h-[75%]
+            m-auto
+            object-cover
+            z-0
+            rounded-lg
+            pointer-events-none
+          "
+                  />
+
+                  {/* Frame nằm đè lên */}
+                  <img
+                    src={
+                      selectedFrameKey
+                        ? frameModules[`../assets/images/frame/${selectedFrameKey}`]
+                        : avatarFrame
+                    }
+                    alt="Avatar Frame"
+                    className="
+            absolute
+            inset-0
+            w-full h-full
+            object-contain
+            z-10
+            pointer-events-none
+          "
+                  />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">{user ? user.name : "AFK"}</h3>
+
+                {/* Tên + UID */}
+                <h3 className="text-2xl font-bold mb-2">{newName || user?.name || "AFK"}</h3>
                 <p className="text-white/80 text-sm mb-4">UID: {user ? user.uid : "12345678"}</p>
               </div>
             </div>
@@ -370,6 +477,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                         if (!selectedKey) return;
                         const encoded = localStorage.getItem("userData");
                         const data = encoded ? JSON.parse(atob(encoded)) : {};
+                        updateProfile({ avatarKey: selectedKey });
                         data.avatarKey = selectedKey;
                         localStorage.setItem("userData", btoa(JSON.stringify(data)));
                         onLoginSuccess && onLoginSuccess(data);
@@ -434,6 +542,100 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 </div>
               </div>
             )}
+
+
+            {showForm === "rename" && (
+              <div className="text-white p-4">
+                <h3 className="text-lg font-bold mb-3">Đổi tên hiển thị</h3>
+
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nhập tên mới..."
+                  className="w-full px-3 py-2 rounded bg-white/10 border border-white/20 focus:outline-none mb-4"
+                />
+
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => setShowForm("menu")}
+                    className="px-4 py-2 bg-gray-600 rounded-lg"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!newName.trim()) return;
+                      const encoded = localStorage.getItem("userData");
+                      const data = encoded ? JSON.parse(atob(encoded)) : {};
+                      updateProfile({ name: newName.trim() });
+                      data.name = newName.trim();
+                      localStorage.setItem("userData", btoa(JSON.stringify(data)));
+                      setUser(data);
+                      onLoginSuccess && onLoginSuccess(data);
+                      setShowForm("menu");
+                    }}
+                    className="px-4 py-2 bg-green-500 rounded-lg"
+                  >
+                    Lưu
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+            {showForm === "frame" && (
+              <div className="text-white p-4 h-[300px] flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={() => setShowForm("menu")}
+                    className="px-4 py-2 bg-gray-600 rounded-lg"
+                  >
+                    Quay lại
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!selectedFrameKey) return;
+                      const encoded = localStorage.getItem("userData");
+                      const data = encoded ? JSON.parse(atob(encoded)) : {};
+                      updateProfile({ frameKey: selectedFrameKey });
+                      data.frameKey = selectedFrameKey;
+                      localStorage.setItem("userData", btoa(JSON.stringify(data)));
+                      onLoginSuccess && onLoginSuccess(data);
+                      setUser(data);
+                      setShowForm("menu");
+                    }}
+                    className="px-4 py-2 bg-green-500 rounded-lg disabled:opacity-50"
+                    disabled={!selectedFrameKey}
+                  >
+                    Lưu
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    {allFrames.slice(0, 20).map(({ key, url }) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedFrameKey(key)}
+                        aria-pressed={selectedFrameKey === key}
+                        className={`border rounded-md p-2 ${selectedFrameKey === key ? "border-white" : "border-gray-600"
+                          }`}
+                      >
+                        <img
+                          src={url}
+                          alt={key}
+                          className="w-full h-20 object-cover rounded"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+
+
 
 
 

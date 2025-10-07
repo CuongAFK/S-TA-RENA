@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import bgVideo from "../assets/videos/home.mp4";
-import avatarFrame from "../assets/images/avatarFrame.png";
+import avatarFrame from "../assets/images/frame/frame-1.png";
 import infoFrame from "../assets/images/infoFrame.png";
 import rubystarlight from "../assets/icons/rubystarlight.png";
 import credit from "../assets/icons/credit.png";
@@ -25,6 +25,19 @@ const AVATAR_URL_BY_KEY = Object.fromEntries(
   })
 );
 
+const frameModules = import.meta.glob("../assets/images/frame/frame-*.png", {
+  eager: true,
+  import: "default",
+});
+
+const FRAME_URL_BY_KEY = Object.fromEntries(
+  Object.entries(frameModules).map(([path, url]) => {
+    const m = path.match(/(frame-\d+\.png)$/);
+    return [m ? m[1] : path, url];
+  })
+);
+
+
 
 
 const Home = () => {
@@ -32,31 +45,36 @@ const Home = () => {
   const [avatarSrc, setAvatarSrc] = useState(avatar); // default
   const [isModalOpen, setModalOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [frameSrc, setFrameSrc] = useState("");
 
-  useEffect(() => {
-    const encodedData = localStorage.getItem("userData");
-    if (encodedData) {
-      try {
-        const decoded = JSON.parse(atob(encodedData));
-        setUserData(decoded);
-      } catch (e) {
-        console.error("Lỗi giải mã user:", e);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("userData");
     if (!saved) return;
-    const decoded = JSON.parse(atob(saved));
-    setUserData(decoded);
 
-    // Nếu có avatarKey thì map sang URL; không thì dùng mặc định
-    if (decoded.avatarKey) {
-      const url = AVATAR_URL_BY_KEY[decoded.avatarKey];
-      if (url) setAvatarSrc(url);
+    try {
+      const decoded = JSON.parse(atob(saved));
+      setUserData(decoded);
+
+      // Nếu có avatarKey thì map sang URL
+      if (decoded.avatarKey && AVATAR_URL_BY_KEY[decoded.avatarKey]) {
+        setAvatarSrc(AVATAR_URL_BY_KEY[decoded.avatarKey]);
+      } else {
+        setAvatarSrc(avatar); // fallback ảnh mặc định
+      }
+
+      // Nếu có frameKey thì map sang URL
+      if (decoded.frameKey && FRAME_URL_BY_KEY[decoded.frameKey]) {
+        setFrameSrc(FRAME_URL_BY_KEY[decoded.frameKey]);
+      } else {
+        setFrameSrc(avatarFrame); // fallback frame mặc định
+      }
+
+    } catch (err) {
+      console.error("Lỗi giải mã userData:", err);
     }
   }, []);
+
 
 
   const handleAvatarClick = () => {
@@ -84,20 +102,44 @@ const Home = () => {
         {/* BOX 1: Góc trên trái (gradient từ trái & trên) */}
         <div className="box-1 flex bg-gradient-to-br from-black/60 to-transparent overflow-hidden max-w-full">
           {/* BOX-1A: AVATAR */}
-          <div className="box-1a items-center justify-center w-[31%] h-full relative flex-shrink-0" onClick={handleAvatarClick}>
-            <img
-              src={avatarFrame}
-              alt="Avatar Frame"
-              className="absolute inset-0  w-full object-cover z-10 pointer-events-none"
-            />
+          <div
+            className="box-1a items-center justify-center w-[31%] h-full relative flex-shrink-0"
+            onClick={handleAvatarClick}
+          >
+            {/* Ảnh Avatar ở dưới (có bo góc + scale nhỏ hơn frame) */}
             <img
               src={avatarSrc}
               alt="Avatar"
-              className="absolute inset-0 w-full object-cover z-0 pointer-events-none"
+              className="
+      absolute            /* giúp canh chồng lên theo thẻ cha */
+      inset-0             /* kéo sát 4 cạnh cha */
+      w-[74%]             /* bạn chỉnh % để to/nhỏ avatar */
+      h-[74%]             /* nếu muốn tròn hoặc vuông thì căn chỉnh tiếp */
+      m-auto              /* căn giữa */
+      object-cover        /* giữ tỉ lệ ảnh */
+      z-0                 /* nằm dưới frame */
+      pointer-events-none
+      rounded-lg
+    "
             />
 
-
+            {/* Ảnh Frame đè lên */}
+            <img
+              src={frameSrc || avatarFrame}
+              alt="Avatar Frame"
+              className="
+      absolute
+      inset-0             /* canh full theo box-1a */
+      w-full              /* bao toàn bộ khung */
+      h-full
+      object-contain      /* giữ tỉ lệ ảnh viền */
+      pointer-events-none
+      z-10
+    "
+            />
           </div>
+
+
 
           {/* BOX-1B: INFO */}
           <div className="box-1b relative flex-1 h-full w-full">
@@ -243,12 +285,26 @@ const Home = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onLoginSuccess={(data) => {
+          if (!data) {
+            // ✅ Khi logout → reset avatar + frame về mặc định
+            setUserData(null);
+            setAvatarSrc(avatar);         // Ảnh mặc định
+            setFrameSrc(avatarFrame);     // Viền mặc định
+            return;
+          }
+
           setUserData(data);
+
           if (data.avatarKey) {
             const url = AVATAR_URL_BY_KEY[data.avatarKey];
             if (url) setAvatarSrc(url);
           }
+          if (data.frameKey) {
+            const frameUrl = FRAME_URL_BY_KEY[data.frameKey];
+            if (frameUrl) setFrameSrc(frameUrl);
+          }
         }}
+
       />
 
 
