@@ -12,6 +12,16 @@ import settingsIcon from "../assets/icons/settings.png";
 import moreIcon from "../assets/icons/more.png";
 import AccountModal from "../components/AccountModal";
 import avatar from "../assets/images/avatar.png";
+import Box8Nav from "../components/Box8Nav";
+
+import {
+  Users,
+  User,
+  Backpack,
+  BookOpen,
+  ClipboardList,
+} from "lucide-react";
+
 
 
 const avatarModules = import.meta.glob("../assets/images/avt/avt-*.jpg", {
@@ -46,6 +56,8 @@ const Home = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [frameSrc, setFrameSrc] = useState("");
+  const [activeModal, setActiveModal] = useState(null);
+
 
 
   useEffect(() => {
@@ -274,7 +286,32 @@ const Home = () => {
         <div className="box-7 bg-gradient-to-tr from-black/60 to-transparent border border-white" />
 
         {/* BOX 8: Dưới giữa (gradient từ dưới) */}
-        <div className="box-8 bg-gradient-to-t from-black/60 to-transparent border border-white" />
+        <div
+          className="box-8 from-black/60 to-transparent border border-white w-full h-full flex items-center justify-around px-2"
+        >
+          {[
+            { key: "formation", name: "Đội hình", icon: Users },
+            { key: "character", name: "Nhân vật", icon: User },
+            { key: "inventory", name: "Túi đồ", icon: Backpack },
+            { key: "encyclopedia", name: "Bách khoa", icon: BookOpen },
+            { key: "quest", name: "Nhiệm vụ", icon: ClipboardList },
+          ].map(({ key, name, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveModal(key)}
+              className="flex flex-col items-center gap-1 text-white hover:text-yellow-300 transition-transform hover:scale-110"
+            >
+              <Icon size={28} />
+              <span className="text-xs font-medium">{name}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* GỌI MODAL (ở ngoài Box8) */}
+        {activeModal && (
+          <Box8Nav activeModal={activeModal} closeModal={() => setActiveModal(null)} />
+        )}
+
 
         {/* BOX 9: Góc dưới phải (gradient từ phải & dưới) */}
         <div className="box-9 bg-gradient-to-tl from-black/60 to-transparent border border-white" />
