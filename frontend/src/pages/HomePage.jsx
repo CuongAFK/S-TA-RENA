@@ -302,7 +302,7 @@ const Home = () => {
               className="flex flex-col items-center gap-1 text-white hover:text-yellow-300 transition-transform hover:scale-110"
             >
               <Icon size={28} />
-              <span className="text-xs font-medium">{name}</span>
+              <span className="text-[8px] lg:text-xs font-medium">{name}</span>
             </button>
           ))}
         </div>
