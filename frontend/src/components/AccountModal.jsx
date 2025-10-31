@@ -210,62 +210,113 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
   };
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      setMessage("Vui lòng nhập TÊN và mật khẩu!");
-      return;
-    }
-
     setLoading(true);
     setMessage("");
 
     try {
-      // Bước 1: Đăng nhập
-      const res = await fetch(API_URL, {
+      // 🔹 B1: Gửi yêu cầu đăng nhập
+      const loginRes = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "login",
           name: username,
-          password
+          password,
         }),
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        // ✅ Bước 2: Lấy thêm avatar, frame từ DB
-        const profileRes = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "getUser",
-            uid: data.uid
-          }),
-        });
-
-        const profile = await profileRes.json();
-
-        if (profile.success) {
-          // ✅ Lưu đầy đủ vào localStorage
-          localStorage.setItem("userData", btoa(JSON.stringify(profile)));
-
-          // ✅ Cập nhật UI
-          setUser(profile);
-          onLoginSuccess && onLoginSuccess(profile);
-          setMessage("Đăng nhập thành công!");
-          setShowForm("menu");
-        } else {
-          setMessage("Không thể tải dữ liệu người dùng!");
-        }
-      } else {
-        setMessage(data.message || "Sai thông tin đăng nhập!");
+      const data = await loginRes.json();
+      if (!data.success) {
+        setMessage(data.message || "Sai tài khoản hoặc mật khẩu!");
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      setMessage("Có lỗi xảy ra khi kết nối!");
-    }
 
-    setLoading(false);
+
+
+
+      // 🔹 B2: Lấy profile
+      const profileRes = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "getUser",
+          uid: data.uid,
+        }),
+      });
+      const profile = await profileRes.json();
+
+      // 🔹 B3: Lấy ownership
+      const ownRes = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "getOwnership",
+          uid: data.uid,
+        }),
+      });
+      const ownership = await ownRes.json();
+      console.log("Ownership response:", ownership);
+
+      if (ownership.success) {
+        localStorage.setItem(
+          "ownership",
+          btoa(JSON.stringify({
+            uid: ownership.uid,
+            ownedChars: ownership.ownedChars || [],
+            ownedEquips: ownership.ownedEquips || [],
+            equipped: ownership.equipped || {},
+          }))
+        );
+        console.log("✅ Saved ownership (base64):", ownership);
+      }
+
+      // 🔹 B4: Lưu userData
+      const userData = {
+        uid: profile.uid,
+        name: profile.name,
+        avatarKey: profile.avatarKey || null,
+        frameKey: profile.frameKey || null,
+      };
+      localStorage.setItem("userData", btoa(JSON.stringify(userData)));
+      setUser(userData);
+      onLoginSuccess && onLoginSuccess(userData);
+      setShowForm("menu");
+      setMessage("Đăng nhập thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi đăng nhập:", err);
+      setMessage("Có lỗi xảy ra khi kết nối!");
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  //----------------------------------------------
+  // Mẫu dữ liệu trả về từ API
+  //----------------------------------------------
+  // 📦 [API: getUser]
+  // ✅ Dữ liệu mẫu trả về:
+  // {
+  //   "success": true,
+  //   "uid": 4783706,
+  //   "name": "AFK",
+  //   "avatarKey": "avt-4.jpg",
+  //   "frameKey": "frame-16.png"
+  // }
+
+  //----------------------------------------------
+
+  // 📦 [API: getOwnership]
+  // ✅ Dữ liệu mẫu trả về:
+  // {
+  //   "success": true,
+  //   "uid": "4783706",
+  //   "ownedChars": ["1", "2"],
+  //   "ownedEquips": ["1", "2"],
+  //   "equipped": { "1": 2, "2": null }
+  // }
+  // ⚠️ Lưu ý: `uid` là chuỗi, `ownedChars` và `ownedEquips` là mảng chuỗi, không phải số.
 
 
   const updateProfile = async (updates) => {
