@@ -402,7 +402,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                 </div>
 
                 {/* Tên + UID */}
-                <h3 className="text-2xl font-bold mb-2">{newName || user?.name || "AFK"}</h3>
+                <h3 className="text-2xl font-bold mb-2 font-['Roboto']">{newName || user?.name || "AFK"}</h3>
                 <p className="text-white/80 text-sm mb-4">UID: {user ? user.uid : "12345678"}</p>
               </div>
             </div>
@@ -441,7 +441,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
               <div className="flex flex-col items-center justify-center h-70 text-white p-6 rounded-lg max-w-md mx-auto bg-gradient-to-r from-orange-400/50 via-red-500/50 to-pink-500">
                 <h3 className="text-md font-semibold text-white mb-9">Đăng ký tài khoản</h3>
 
-                <div className="w-full space-y-2 text-[8px] lg:text-lg ">
+                <div className="w-full space-y-2 text-[8px] lg:text-lg font-['Roboto'] ">
                   <input
                     type="text"
                     placeholder="Tên đăng nhập (3-12 ký tự)"
@@ -487,7 +487,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
               <div className="flex flex-col items-center justify-center h-70 text-white p-6 rounded-lg max-w-md mx-auto bg-gradient-to-r from-green-400/50 via-blue-500/50 to-purple-500">
                 <h3 className="text-md font-semibold text-white mb-9">Đăng nhập</h3>
 
-                <div className="w-full space-y-2 text-[8px] lg:text-lg">
+                <div className="w-full space-y-2 text-[8px] lg:text-lg font-['Roboto']">
                   <input
                     type="text"
                     placeholder="Tên đăng nhập"
@@ -604,7 +604,7 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Nhập tên mới..."
-                  className="w-full px-3 py-2 rounded bg-white/10 border border-white/20 focus:outline-none mb-4"
+                  className="w-full px-3 py-2 rounded bg-white/10 border border-white/20 focus:outline-none mb-4 font-['Roboto']"
                 />
 
                 <div className="flex justify-between">

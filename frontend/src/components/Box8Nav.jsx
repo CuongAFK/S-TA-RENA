@@ -103,6 +103,8 @@ export default function Box8Nav({ activeModal, closeModal }) {
   const [showFormationModal, setShowFormationModal] = useState(false);
   const [formation, setFormation] = useState({ teams: [] });
   const [selectedTeam, setSelectedTeam] = useState(1);
+  const [selectedTeamChar, setSelectedTeamChar] = useState(null);
+
 
   const [ownership, setOwnership] = useState({
     ownedChars: [],
@@ -988,119 +990,149 @@ export default function Box8Nav({ activeModal, closeModal }) {
   const renderTeamFormation = () => {
     if (!formation?.teams?.length) return null;
     return (
-      <div className="p-6 text-white font-['Roboto']">
-        {/* 🏷️ Tabs chọn team */}
-        <div className="flex justify-center space-x-4 mb-6">
-          {formation.teams.map((team) => (
-            <button
-              key={team.id}
-              onClick={() => setSelectedTeam(team.id)}
-              className={`px-4 py-2 rounded-lg border ${selectedTeam === team.id ? "bg-blue-500" : "bg-gray-700 hover:bg-gray-600"
-                }`}
-            >
-              {team.name}
-            </button>
-          ))}
+      <div className="p-6 text-white font-['Roboto'] grid grid-cols-10 gap-6 h-full">
+        {/* 🧭 CỘT TRÁI - DANH SÁCH TƯỚNG */}
+        <div className="col-span-3 bg-gray-800/40 rounded-xl p-3 overflow-y-auto border border-white/10">
+          <h3 className="text-lg font-bold mb-3 text-center">Danh sách tướng</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {ownership?.ownedChars?.map((cid) => {
+              const c = characters.find((cc) => cc.id === Number(cid));
+              if (!c) return null;
+              const team = formation.teams.find((t) => t.id === selectedTeam);
+              const isPicked = team?.members.includes(c.id);
+
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => {
+                    const updated = formation.teams.map((t) => {
+                      if (t.id === selectedTeam) {
+                        let members = [...t.members];
+                        if (isPicked) members = members.filter((m) => m !== c.id);
+                        else if (members.length < 5) members.push(c.id);
+                        return { ...t, members };
+                      }
+                      return t;
+                    });
+                    setFormation({ teams: updated });
+                    localStorage.setItem("formation", JSON.stringify({ teams: updated }));
+                  }}
+                  className={`relative border rounded-lg overflow-hidden transition hover:scale-105 cursor-pointer ${isPicked ? "border-green-400" : "border-gray-700"
+                    }`}
+                >
+                  {/* Ảnh tướng */}
+                  <img src={c.thumb} alt={c.name} className="w-full h-full object-cover btn" />
+
+                  {/* Vũ khí góc phải */}
+                  {c.mainWeapon && (
+                    <img
+                      src={c.mainWeapon.img}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full border border-yellow-400"
+                      alt={c.mainWeapon.name}
+                    />
+                  )}
+
+                  {/* Vai trò + phe (xếp dọc, căn giữa) */}
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex flex-col items-center text-center">
+                    <div className="flex gap-1 mb-0.5">
+                      {c.roles.map((r, i) => (
+                        <img
+                          key={i}
+                          src={roleIcons[r]}
+                          title={r}
+                          className="w-4 h-4 rounded-full border border-white/50"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[8px] bg-black/70 px-1 rounded text-gray-200 truncate">
+                      {c.faction}
+                    </span>
+                  </div>
+
+                </div>
+
+              );
+            })}
+          </div>
         </div>
 
-        {/* 🔧 Đổi tên / Xóa tất cả */}
-        <div className="flex justify-between mb-4">
-          <div className="text-lg font-bold">
-            {formation.teams.find((t) => t.id === selectedTeam)?.name}
-          </div>
-          <div className="space-x-2">
-            <button
-              onClick={() => {
-                const newName = prompt("Nhập tên mới:");
-                if (newName) {
-                  const updated = formation.teams.map((t) =>
-                    t.id === selectedTeam ? { ...t, name: newName } : t
-                  );
-                  setFormation({ teams: updated });
-                  localStorage.setItem("formation", JSON.stringify({ teams: updated }));
-                }
-              }}
-              className="text-yellow-400 hover:text-yellow-300"
-            >
-              Đổi tên
-            </button>
-            <button
-              onClick={() => {
-                const updated = formation.teams.map((t) =>
-                  t.id === selectedTeam ? { ...t, members: [] } : t
+        {/* ⚙️ CỘT PHẢI - XẾP ĐỘI HÌNH */}
+        <div className="col-span-7 bg-gray-900/50 rounded-xl p-5 border border-white/10">
+          <div className="flex gap-4 mb-4">
+            {/* Tabs chọn team */}
+            <div className="flex flex-col gap-2">
+              {formation.teams.map((team) => (
+                <button
+                  key={team.id}
+                  onClick={() => setSelectedTeam(team.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border ${selectedTeam === team.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    }`}
+                >
+                  {team.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Vùng đội hình */}
+            <div className="flex-1 flex items-center justify-around">
+              {Array.from({ length: 5 }).map((_, i) => {
+                const team = formation.teams.find((t) => t.id === selectedTeam);
+                const charId = team?.members[i];
+                const char = characters.find((c) => c.id === charId);
+                return (
+                  <div
+                    key={i}
+                    className="relative w-28 h-full bg-gray-700/60 border border-white/20 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer hover:scale-105 transition"
+                    onClick={() => {
+                      if (char) setSelectedChar(char);
+                    }}
+                  >
+                    {char ? (
+                      <>
+                        <img src={char.thumb} alt={char.name} className="object-cover w-full h-full btn" onClick={() => char && setSelectedTeamChar(char)}
+                        />
+
+                        {/* Vũ khí góc phải */}
+                        {char.mainWeapon && (
+                          <img
+                            src={char.mainWeapon.img}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full border border-yellow-400"
+                            alt={char.mainWeapon.name}
+                          />
+                        )}
+
+                        {/* Vai trò + phe (căn giữa dọc) */}
+                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex flex-col items-center text-center">
+                          <div className="flex gap-1 mb-0.5">
+                            {char.roles.map((r, i) => (
+                              <img
+                                key={i}
+                                src={roleIcons[r]}
+                                className="w-4 h-4 rounded-full border border-white/50"
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[8px] bg-black/70 px-1 rounded text-gray-200 truncate">
+                            {char.faction}
+                          </span>
+                        </div>
+
+                      </>
+
+                    ) : (
+                      <span className="text-gray-500 text-sm">Trống</span>
+                    )}
+                  </div>
                 );
-                setFormation({ teams: updated });
-                localStorage.setItem("formation", JSON.stringify({ teams: updated }));
-              }}
-              className="text-red-400 hover:text-red-300"
-            >
-              Xóa tất cả
-            </button>
+              })}
+            </div>
           </div>
-        </div>
-
-        {/* 🧑‍🎨 Hiển thị đội hình */}
-        <div className="flex justify-center items-center mb-6 space-x-4">
-          {Array.from({ length: 5 }).map((_, i) => {
-            const team = formation.teams.find((t) => t.id === selectedTeam);
-            const charId = team?.members[i];
-            const char = characters.find((c) => c.id === charId);
-            return (
-              <div
-                key={i}
-                onClick={() => {
-                  if (char) {
-                    setSelectedChar(char);
-                    setActiveTab("characters"); // chuyển qua tab tướng để xem chi tiết
-                  }
-                }}
-                className="w-24 h-24 bg-gray-700 border border-white/30 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
-              >
-                {char ? (
-                  <img src={char.thumb} alt={char.name} className="object-cover w-full h-full" />
-                ) : (
-                  <span className="text-gray-500 text-sm">Trống</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 🔽 Danh sách tướng sở hữu */}
-        <div className="grid grid-cols-5 gap-3">
-          {ownership?.ownedChars?.map((cid) => {
-            const c = characters.find((cc) => cc.id === Number(cid));
-            if (!c) return null;
-            const team = formation.teams.find((t) => t.id === selectedTeam);
-            const isPicked = team?.members.includes(c.id);
-
-            return (
-              <div
-                key={c.id}
-                onClick={() => {
-                  const updated = formation.teams.map((t) => {
-                    if (t.id === selectedTeam) {
-                      let members = [...t.members];
-                      if (isPicked) members = members.filter((m) => m !== c.id);
-                      else if (members.length < 5) members.push(c.id);
-                      return { ...t, members };
-                    }
-                    return t;
-                  });
-                  setFormation({ teams: updated });
-                  localStorage.setItem("formation", JSON.stringify({ teams: updated }));
-                }}
-                className={`cursor-pointer border rounded-lg overflow-hidden ${isPicked ? "border-green-400" : "border-transparent"
-                  }`}
-              >
-                <img src={c.thumb} alt={c.name} className="w-full h-20 object-cover" />
-                <div className="text-center text-sm">{c.name}</div>
-              </div>
-            );
-          })}
         </div>
       </div>
     );
+
   };
 
 
@@ -1131,6 +1163,19 @@ export default function Box8Nav({ activeModal, closeModal }) {
     }
   };
 
+
+  const getModalTitle = () => {
+    switch (activeModal) {
+      case "formation": return "Đội hình xuất trận";
+      case "inventory": return "Túi đồ";
+      case "character": return selectedChar ? selectedChar.name : "Danh sách nhân vật";
+      case "encyclopedia": return "Bách khoa toàn thư";
+      case "quest": return "Nhiệm vụ";
+      default: return "Thông tin";
+    }
+  };
+
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="relative bg-gray-900/95 border border-white rounded-2xl p-2 lg:p-6 w-[90%] text-white shadow-2xl h-[90%] overflow-y-auto">
@@ -1144,10 +1189,8 @@ export default function Box8Nav({ activeModal, closeModal }) {
           <X size={40} />
         </button>
 
+        <h2 className="text-xl font-bold mb-0 lg:mb-4 text-center">{getModalTitle()}</h2>
 
-        <h2 className="text-xl font-bold mb-0 lg:mb-4 text-center">
-          {selectedChar ? selectedChar.name : "Nhân vật"}
-        </h2>
 
         <div className="text-sm leading-relaxed">{renderContent()}</div>
 
