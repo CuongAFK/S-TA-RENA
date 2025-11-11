@@ -94,6 +94,8 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
   const handleLogout = () => {
     localStorage.removeItem("userData");
+    localStorage.removeItem("ownership");
+    localStorage.removeItem("formation");
     setUser(null);
     onLoginSuccess && onLoginSuccess(null); // ✅ Reset bên HomePage
     setShowForm("menu");
@@ -279,6 +281,34 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
         frameKey: profile.frameKey || null,
       };
       localStorage.setItem("userData", btoa(JSON.stringify(userData)));
+
+
+      // B5: Lấy formation từ API 
+      try {
+        const formRes = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "getFormation",
+            uid: data.uid,
+          }),
+        });
+        const form = await formRes.json();
+        console.log("Formation API response:", form);
+
+        if (form.success && Array.isArray(form.teams)) {
+          const formationData = { teams: form.teams };
+          localStorage.setItem("formation", btoa(JSON.stringify(formationData)));
+          console.log("Synced formation from API to local");
+        } else {
+          // Nếu không có data → giữ local hiện tại (hoặc default nếu chưa có)
+          console.log("No formation in DB → keep local");
+        }
+      } catch (err) {
+        console.error("Lỗi fetch formation:", err);
+      }
+
+
       setUser(userData);
       onLoginSuccess && onLoginSuccess(userData);
       setShowForm("menu");

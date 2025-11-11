@@ -13,6 +13,7 @@ import moreIcon from "../assets/icons/more.png";
 import AccountModal from "../components/AccountModal";
 import avatar from "../assets/images/avatar.png";
 import Box8Nav from "../components/Box8Nav";
+import Box9ModeSlider from "../components/Box9ModeSlider";
 
 import {
   Users,
@@ -313,8 +314,13 @@ const Home = () => {
         )}
 
 
-        {/* BOX 9: Góc dưới phải (gradient từ phải & dưới) */}
-        <div className="box-9 bg-gradient-to-tl from-black/60 to-transparent border border-white" />
+        {/* BOX 9: Góc dưới phải – Chọn chế độ chơi */}
+        <div className="box-9 bg-gradient-to-tl from-black/60 to-transparent relative overflow-hidden">
+          <Box9ModeSlider />
+        </div>
+
+
+
       </div >
 
       {/* Hiển thị Modal */}
