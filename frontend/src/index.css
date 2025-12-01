@@ -70,15 +70,20 @@ button {
   background: linear-gradient(to bottom, #5a5a5a, #4a4a4a);
 }
 
-/* Glitch Text - Nhẹ hơn, không làm rối */
+
+
+
+
+
+/* Glitch Text Animation */
 .glitch-text {
   position: relative;
   color: white;
-  animation: glitch 3s infinite;
-  text-shadow:
-    0.04em 0 0 rgba(255, 0, 0, 0.6),
-    -0.02em -0.04em 0 rgba(0, 255, 0, 0.6),
-    0.02em 0.04em 0 rgba(0, 0, 255, 0.6);
+  text-shadow: 
+    0.5em 0 0 rgba(255, 0, 0, 0.75),
+    -0.25em -0.5em 0 rgba(0, 255, 0, 0.75),
+    0.25em 0.5em 0 rgba(0, 0, 255, 0.75);
+  animation: glitch 2s infinite;
 }
 
 .glitch-text::before,
@@ -93,76 +98,199 @@ button {
 }
 
 .glitch-text::before {
-  left: 1.5px;
-  text-shadow: -1.5px 0 #ff004c;
+  left: 2px;
+  text-shadow: -2px 0 red;
   clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-  animation: glitch-1 1.8s infinite linear alternate-reverse;
+  animation: glitch-1 1.5s infinite linear alternate-reverse;
 }
 
 .glitch-text::after {
-  left: -1.5px;
-  text-shadow: 1.5px 0 #00fff2;
+  left: -2px;
+  text-shadow: 2px 0 cyan;
   clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-  animation: glitch-2 2s infinite linear alternate-reverse;
+  animation: glitch-2 1.8s infinite linear alternate-reverse;
 }
 
 @keyframes glitch {
-
-  0%,
-  100% {
-    transform: translate(0);
-  }
-
-  15% {
-    transform: translate(-0.8px, -0.8px);
-  }
-
-  30% {
-    transform: translate(0.8px, 0.8px);
-  }
-
-  45% {
-    transform: translate(-0.8px, 0.8px);
-  }
+  0%, 100% { transform: translate(0); }
+  10% { transform: translate(-2px, -2px); }
+  20% { transform: translate(2px, 2px); }
+  30% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
 }
 
 @keyframes glitch-1 {
-
-  0%,
-  100% {
-    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-  }
-
-  50% {
-    clip-path: polygon(0 0, 100% 0, 100% 38%, 0 38%);
-  }
+  0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); }
+  50% { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 350%); }
 }
 
 @keyframes glitch-2 {
-
-  0%,
-  100% {
-    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-  }
-
-  50% {
-    clip-path: polygon(0 62%, 100% 62%, 100% 100%, 0 100%);
-  }
+  0%, 100% { clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%); }
+  50% { clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%); }
 }
 
-/* Rung nhẹ */
+/* Rung nhẹ định kỳ */
 @keyframes pulse-slight {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  50% {
-    transform: translateX(0.4px);
-  }
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(0.5px); }
 }
 
 .animate-pulse-slight {
-  animation: pulse-slight 3.5s ease-in-out infinite;
+  animation: pulse-slight 3s ease-in-out infinite;
 }
+
+
+/* ---- Transition giữa các slide ---- */
+/* Hiệu ứng rõ dần dùng chung */
+.fade-in-base {
+  animation: fadeInBase 1s ease forwards;
+}
+
+@keyframes fadeInBase {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ============================================================= */
+/*  STORY PAGE – CAMERA & EFFECT ANIMATIONS                     */
+/*  Dùng trong GameStoryPage.jsx – class: camera-*              */
+/*  Dễ chỉnh: thời gian, scale, vị trí, tốc độ...               */
+/* ============================================================= */
+
+/* TẮT TRANSITION ĐỂ TRÁNH XUNG ĐỘT VỚI ANIMATION */
+.story-scene-img {
+  transition: none !important;
+}
+
+
+
+
+.camera-pan-2 {
+  animation: camerapan2 var(--duration-pan-2, 25000ms) ease forwards;
+}
+@keyframes camerapan2 {
+  from { transform: translate(-60%, 10%) scale(2.5); }
+  to   { transform: translate(0%, 0%) scale(1.2); }
+}
+
+
+.camera-pan-3 {
+  animation: cameraPan3 var(--duration-pan-3, 20000ms) linear forwards;
+}
+@keyframes cameraPan3 {
+  from { transform: translate(-5%, -10%) scale(1); }
+  to   { transform: translate(0%, 0%) scale(1.2); }
+}
+
+
+.camera-pan-4 {
+  animation: cameraPan4 var(--duration-pan-4, 10000ms) linear forwards;
+}
+@keyframes cameraPan4 {
+  from { transform: translate(-5%, 0%) scale(1.25); }
+  to   { transform: translate(0%, 0%) scale(1.75); }
+}
+
+
+
+.camera-pan-1 {
+  animation: cameraPan1 var(--duration-pan-1, 20000ms) linear forwards;
+}
+@keyframes cameraPan1 {
+  from { transform: translate(0%, 70%) scale(2.25); }
+  to   { transform: translate(0%, -50%) scale(2.25); }
+}
+
+
+
+.camera-pan-5 {
+  animation: cameraPan5 var(--duration-pan-5, 30000ms) linear forwards;
+}
+@keyframes cameraPan5 {
+  from { transform: translate(-20%, 100%) scale(3); }
+  to   { transform: translate(0%, 0%) scale(1); }
+}
+
+.camera-pan-6 {
+  animation: camerapan6 var(--duration-pan-6, 20000ms) ease forwards;
+}
+@keyframes camerapan6 {
+  from { transform: translate(0%, 30%) scale(4.5); }
+  to   { transform: translate(0%, 50%) scale(2.5); }
+}
+
+.camera-pan-7 {
+  animation: camerapan7 var(--duration-pan-7, 1000ms) ease forwards;
+}
+@keyframes camerapan7 {
+  from { transform: translate(0%, 30%) scale(3.5); }
+  to   { transform: translate(40%, 40%) scale(4.5); }
+}
+
+.camera-pan-8 {
+  animation: camerapan8 var(--duration-pan-8, 1000ms) ease forwards;
+}
+@keyframes camerapan8 {
+  from { transform: translate(20%, 30%) scale(3.5); }
+  to   { transform: translate(10%, 50%) scale(4.5); }
+}
+
+.camera-pan-9 {
+  animation: camerapan9 var(--duration-pan-9, 50000ms) ease forwards;
+}
+@keyframes camerapan9 {
+  from { transform: translate(-20%, 30%) scale(3.5); }
+  to   { transform: translate(-70%, 80%) scale(5.5); }
+}
+
+.camera-pan-10 {
+  animation: camerapan10 var(--duracamerapan10, 50000ms) ease forwards;
+}
+@keyframes camerapan10 {
+  from { transform: translate(0%, 0%) scale(1.5); }
+  to   { transform: translate(0%, 0%) scale(1); }
+}
+
+
+/* ------------------------------------------------------------- */
+/* 7. KHÔNG CÓ HOẠT HÌNH (NONE) – Dùng khi chỉ hiện tĩnh         */
+/* ------------------------------------------------------------- */
+.camera-none {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------- */
+/* MÀN ĐEN MỜ DẦN (DÙNG CHO HIỆU ỨNG CHUYỂN CẢNH)                 */
+/* ------------------------------------------------------------- */
+.story-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 1;
+  transition: opacity 1000ms ease;
+  z-index: 20;
+}
+.story-overlay.fade-out {
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------- */
+/* CON TRỎ NHẤP NHÁY KHI ĐANG GÕ CHỮ                             */
+/* ------------------------------------------------------------- */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: white;
+  margin-left: 4px;
+  animation: blink 0.7s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ============================================================= */
+/* CÁCH DÙNG TRONG JSX (ví dụ):                                 */
+/*   <img className="story-scene-img camera-pan-down" ... />    */
+/*   <div className="story-overlay" />                          */
+/* ============================================================= */

@@ -1,0 +1,59 @@
+//   {
+  //     bg: scene1,
+  //     camera: "pan-1",
+  //     dialogues: [
+  //   { 
+  //     speaker: "Pom-Pom", 
+  //     text: "Á á á! Mọi người ơi, Pom-Pom phát hiện! Phía trước đường ray Star Rail... đột nhiên xuất hiện một đoàn tàu lạ hoắc đang lao vun vút ngang đường của đội tàu Astral chúng ta!!" 
+  //   },
+  //   { 
+  //     speaker: "Pom-Pom", 
+  //     text: "Ôi không! Va chạm không tránh khỏi nữa rồi! Nguy hiểm khủng khiếp! Mọi người mau bảo vệ bản thân ngay lập tức đi!!! Cầm chặt tay vịn, ôm đầu, nằm sấp xuống sàn!!! AAAaaa!!!" 
+  //   },
+  // ],
+  //   },
+  // {
+  //   bg: scene2,
+  //   camera: "pan-2",
+  //   dialogues: [
+  //     // ... previous Pom-Pom dialogues ...
+  //     {
+  //       speaker: "Stelle",
+  //       text: "Mọi người nhìn ra cửa sổ kìa! Một vùng đất bay lơ lửng siêu lạ hoắc! Pháo đài khổng lồ, công trình cổ đại, cỏ xanh mênh mông với quái vật lảng vảng... Ba con đường dẫn vào chiến trường! Chỗ này giống hệt con game tôi hay chơi cùng Sói Bạc!"
+  //     },
+  //     {
+  //       speaker: "Stelle",
+  //       text: `Dan Heng, anh nghĩ đây là đâu? Tôi muốn lao ra khám phá ngay! Cây gậy bóng chày của tôi sắp "bốp" vào pháo đài đầu tiên rồi đấy, hehe!`
+  //     },
+  //   ],
+  // },
+  // {
+  //   bg: scene3,
+  //   camera: "pan-3",
+  //   dialogues: [
+  //     // ... previous Stelle dialogues ...
+  //     {
+  //       speaker: "Dan Heng",
+  //       text: "…(lật nhanh dữ liệu trên máy tính bảng)..."
+  //     },
+  //     {
+  //       speaker: "Dan Heng",
+  //       text: "...Theo kho lưu trữ Vidyadhara, khu vực này khớp với mô tả cổ xưa: Bình Nguyên Vô Tận – đấu trường sinh tử không hồi kết giữa vô số phe phái. Nơi đây không an toàn. Chúng ta nên tìm cách rời khỏi ngay."
+  //     },
+  //   ],
+  // },
+  // {
+  //   bg: scene4,
+  //   camera: "pan-4",
+  //   dialogues: [
+  //     // ... previous Dan Heng dialogue ...
+  //     {
+  //       speaker: "pom-pom",
+  //       text: "...(bước ra khỏi khoang lái)..."
+  //     },
+  //     {
+  //       speaker: "Pom-Pom",
+  //       text: "...Hừm hừm! Mọi người nghe đây! Tàu Astral vừa bị tông một cú trời giáng, động cơ rít lên như mèo bị đạp đuôi, đường ray Star Rail thì biến mất tăm! Sửa chữa ít nhất cũng khá lâu! Trong lúc Pom-Pom vá víu, các cậu phải bảo vệ tàu trước mọi nguy hiểm có thể nhảy xổ ra nhé!"
+  //     },
+  //   ],
+  // },
