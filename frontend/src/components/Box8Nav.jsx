@@ -32,6 +32,31 @@ import skillOff from "../assets/icons/skillPointsOff.jpg";
 // }
 //}
 // ----------------------------------------------
+//----------------------------------------------
+// Mẫu dữ liệu trả về từ API
+//----------------------------------------------
+// 📦 [API: getUser]
+// ✅ Dữ liệu mẫu trả về:
+// {
+//   "success": true,
+//   "uid": 4783706,
+//   "name": "AFK",
+//   "avatarKey": "avt-4.jpg",
+//   "frameKey": "frame-16.png"
+// }
+
+//----------------------------------------------
+
+// 📦 [API: getOwnership]
+// ✅ Dữ liệu mẫu trả về:
+// {
+//   "success": true,
+//   "uid": "4783706",
+//   "ownedChars": ["1", "2"],
+//   "ownedEquips": ["1", "2"],
+//   "equipped": { "1": 2, "2": null }
+// }
+// ⚠️ Lưu ý: `uid` là chuỗi, `ownedChars` và `ownedEquips` là mảng chuỗi, không phải số.
 
 // ⚔️ Lớp Trang bị
 class Equipment {

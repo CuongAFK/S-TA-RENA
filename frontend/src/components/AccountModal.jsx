@@ -321,7 +321,20 @@ const AccountModal = ({ isOpen, onClose, onLoginSuccess }) => {
     }
   };
 
+  // ----------------------------------------------
+  // 🧾 MẪU DỮ LIỆU
 
+  // ownership mẫu
+  //{
+  // uid: "4783706",              // id người chơi
+  // ownedChars: ["1", "2"],      // danh sách id tướng sở hữu
+  // ownedEquips: ["1", "2"],     // danh sách id trang bị sở hữu
+  // equipped: {                  // nhân vật nào đang mang trang bị nào
+  //   "1": 2,                    // Valhein mang Giày Hermes (id 2)
+  //   "2": null                  // Triệu Vân chưa có trang bị
+  // }
+  //}
+  // ----------------------------------------------
   //----------------------------------------------
   // Mẫu dữ liệu trả về từ API
   //----------------------------------------------

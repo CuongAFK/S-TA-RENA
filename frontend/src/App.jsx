@@ -7,6 +7,7 @@ import { Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import GameStoryPage from "./pages/GameStoryPage";
+import GameplayPage from './pages/GameplayPage';
 import './App.css';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/game/story" element={<GameStoryPage />} />
+          <Route path="/gameplay" element={<GameplayPage />} />
         </Routes>
       </div>
 
