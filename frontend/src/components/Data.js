@@ -1,4 +1,4 @@
-export const characters = [
+const [characters, setCharacters] = useState([
   //valhein
   {
     id: 1,
@@ -123,9 +123,10 @@ export const characters = [
     },
     story: `“Thế thương tựa rồng bay, thế tấn tựa rồng cuộn, mỗi mũi thương như ngàn mũi tên xuyên thấu kẻ thù. Chỉ cần thấy ngọn thương của Triệu Vân cũng đủ làm kẻ địch phải ớn lạnh.” Không một ai dám ngông cuồng, coi thường sức mạnh của Triệu Vân.`,
   }
+]);
 
 
-];
+
 
 
 

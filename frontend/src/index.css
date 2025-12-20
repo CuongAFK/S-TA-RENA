@@ -30,6 +30,10 @@ button {
   cursor: url('./assets/cursors/cursor_02.png'), auto;
 }
 
+.cursor-pointer {
+  cursor: url('./assets/cursors/cursor_02.png'), auto;
+}
+
 .btn {
   cursor: url('./assets/cursors/cursor_02.png'), auto;
 }
@@ -294,3 +298,95 @@ button {
 /*   <img className="story-scene-img camera-pan-down" ... />    */
 /*   <div className="story-overlay" />                          */
 /* ============================================================= */
+
+
+/* src/index.css */
+
+/* Viền xanh da trời cho đồng minh (Cyan) */
+.glow-player {
+  filter: drop-shadow(0 0 2px rgba(0, 255, 255, 1)) drop-shadow(0 0 4px rgba(0, 200, 255, 0.8));
+}
+
+/* Viền đỏ đậm cho kẻ địch */
+.glow-enemy {
+  filter: drop-shadow(0 0 2px rgba(255, 0, 0, 1)) drop-shadow(0 0 4px rgba(200, 0, 0, 0.8));
+}
+
+/* Hiệu ứng khi Active (Đến lượt): + Phóng to */
+.glow-active {
+  filter: drop-shadow(0 0 1px rgb(0, 0, 0)) drop-shadow(0 0 10px rgba(48, 48, 48, 0.8));
+  z-index: 100 !important;
+  transform: scale(1.15); /* Phóng to nhẹ */
+}
+
+/* Hiệu ứng Mục tiêu (Target): Đỏ nhấp nháy mạnh */
+.glow-target {
+  filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 10px #b91c1c);
+  animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { filter: drop-shadow(0 0 3px #ef4444); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 8px #ef4444); transform: scale(1.05); }
+}
+
+
+/* Thêm animation cho Tâm ngắm (nếu bạn muốn) */
+.animate-spin-slow {
+  filter: drop-shadow(0 0 3px rgba(0, 255, 255, 1)) drop-shadow(0 0 5px rgba(0, 200, 255, 0.8));
+  animation: spin 3s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+
+/* Cắt ảnh Action Bar hình chữ nhật */
+.clip-rect-top {
+  object-fit: cover;
+  object-position: top center; /* Lấy phần đầu nhân vật */
+}
+
+/* 1. Glass Panel (Khung kính đen trong suốt) */
+.glass-panel {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* 2. Thanh cuộn mỏng (cho Action Bar) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 3. Hiệu ứng nhấp nháy cho SP dự đoán */
+@keyframes ghost-blink {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+.sp-ghost-loss {
+  background-color: #ef4444 !important; /* Đỏ */
+  animation: ghost-blink 0.8s infinite;
+}
+.sp-ghost-gain {
+  background-color: #4ade80 !important; /* Xanh */
+  animation: ghost-blink 0.8s infinite;
+}
+
+
+
+

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+
+import { CHARACTERS_DATA } from "../data/charactersData";
 // ⚙️ API cấu hình
 const API_URL = "https://api-proxy.bbao12345321c.workers.dev/api/submit";
 const SECRET_TOKEN = "Hacker-Is-Gay";
@@ -237,132 +239,8 @@ export default function Box8Nav({ activeModal, closeModal }) {
   // 🧩 DỮ LIỆU NHÂN VẬT
   // ----------------------------------------------
 
-  const [characters, setCharacters] = useState([
-    //valhein
-    {
-      id: 1,
-      name: "Valhein",
-      faction: "Quân đoàn Thợ Diệt Quỷ",
-      roles: ["Xạ thủ", "Pháp sư"],
-      stats: {
-        hp: 100,
-        maxHp: 100,
-        mana: 0,
-        maxMana: 50,
-        physicalDamage: 10,
-        magicDamage: 10,
-        moveSpeed: 100,
-        attackSpeed: 100,
-        lifesteal: 0,
-        armor: 0,
-        magicResist: 0,
-        damageReduction: 0,
-        shield: 0,
-      },
-      thumb: "images/charList/valhein/avt.png",
-      banner: "images/charList/valhein/banner.jpg",
-      mainWeapon: null,
-      skills: {
-        passive: {
-          title: "Ám khí",
-          type: "Nội tại",
-          tags: ["Đặc biệt"],
-          img: "images/charList/valhein/noi tai.png",
-          desc: `Nội tại: Đòn đánh thường, Đòn đánh thường cường hóa và chiêu cuối sẽ nhận 1 dấu ấn Thợ săn. 
-          Đủ 3 dấu ấn sẽ cường hóa đòn đánh kế tiếp thành đòn cường hóa ngẫu nhiên đồng thời hồi 10 mana và Tăng tốc 1.`,
-        },
-        normal: {
-          title: "Chuyến săn mạo hiểm",
-          type: "Đánh thường",
-          tags: ["+1 Điểm chiến kỹ"],
-          img: "images/charList/valhein/danh thuong.png",
-          desc: `Gây (stvl) lên 1 kẻ địch.
-          đòn đánh thường cường hóa (nội tại) sẽ ngẫu nhiên có 1 trong 3 hiệu ứng:
-          Phi tiêu xanh gây (stvl) và hồi 1 điểm chiến kỹ.
-          Phi tiêu đỏ gây (stvl) cho 3 mục tiêu liền kề.
-          Phi tiêu vàng gây (stvl) và làm choáng 1 lượt.`,
-        },
-        skill: {
-          title: "Lời nguyền tử vong",
-          type: "Chiến kỹ",
-          tags: ["Đặc biệt", "-1 Điểm chiến kỹ"],
-          img: "images/charList/valhein/chien ky.png",
-          desc: `Chiến kỹ: Thi triển 1 đòn đánh thường cường hóa ngẫu nhiên lên 1 kẻ địch.`,
-        },
-        ultimate: {
-          title: "Bão đạn",
-          type: "Chiêu cuối",
-          tags: ["Diện rộng", "-50 Mana"],
-          img: "images/charList/valhein/chieu cuoi.png",
-          desc: `Bắn ra loạt đạn ma pháp gây (stp) lên tất cả kẻ địch.`,
-        },
-      },
-      story: `Valhein là thợ săn ma cà rồng huyền thoại của Quân đoàn Thợ Diệt Quỷ.
-      Anh mang trong mình dòng máu nửa người nửa quỷ, dùng vũ khí kết hợp giữa phép thuật và công nghệ
-      để tiêu diệt sinh vật bóng tối trong im lặng.`,
-    },
-
-    //trieuvan
-    {
-      id: 2,
-      name: "Triệu Vân",
-      faction: "Tam Quốc",
-      roles: ["Đấu sĩ"],
-      banner: "images/charList/trieuvan/banner.jpg",
-      thumb: "images/charList/trieuvan/avt.png",
-      stats: {
-        hp: 200,
-        maxHp: 200,
-        mana: 0,
-        maxMana: 300,
-        physicalDamage: 10,
-        magicDamage: 0,
-        moveSpeed: 100,
-        attackSpeed: 50,
-        lifesteal: 0,
-        armor: 0,
-        magicResist: 0,
-        damageReduction: 0,
-        shield: 0,
-      },
-      mainWeapon: null,
-      skills: {
-        passive: {
-          title: "Long Hồn",
-          type: "Nội tại",
-          tags: ["Tăng ST", "Giải khống chế"],
-          img: "images/charList/trieuvan/noi tai.png",
-          desc: `Khi nhận hiệu ứng khống chế, Triệu Vân sẽ tự tiêu hao 1 điểm chiến kỹ để tự giải khống chế cho bản thân ngay lập tức đồng thời tăng (10 = stvl) cho đến khi kết thúc lượt tiếp theo và tăng tốc 1.
-          Triệu Vân hồi mana theo sát thương gây ra.`
-        },
-        normal: {
-          title: "Long Huyết",
-          type: "Đòn đánh thường",
-          tags: ["Hồi 1 điểm chiến kỹ"],
-          img: "images/charList/trieuvan/danh thuong.png",
-          desc: `Gây (stvl) lên 1 kẻ địch.
-          Đòn đánh thường cường hóa:
-          Gây (stvl) lên 3 kẻ địch liền kề.`
-        },
-        skill: {
-          title: "Long Hống",
-          type: "Chiến kỹ",
-          tags: ["Cường hóa", "-1 Điểm chiến kỹ"],
-          img: "images/charList/trieuvan/chien ky.png",
-          desc: "Gây (5 + stvl) lên 3 kẻ địch liền kề và cường hóa đòn đánh thường kế tiếp và nhận 10% hút máu."
-        },
-        ultimate: {
-          title: "Long Kích",
-          type: "Chiêu cuối",
-          tags: ["Cường hóa", "-50 Mana"],
-          img: "images/charList/trieuvan/chieu cuoi.png",
-          desc: `Triệu Vân gây (20 = stc) lên 1 kẻ địch
-          Trong 3 lượt tiếp theo sát thương cộng thêm từ nội tại và trang bị sẽ được chuyển hoá thành stc.`
-        }
-      },
-      story: `“Thế thương tựa rồng bay, thế tấn tựa rồng cuộn, mỗi mũi thương như ngàn mũi tên xuyên thấu kẻ thù. Chỉ cần thấy ngọn thương của Triệu Vân cũng đủ làm kẻ địch phải ớn lạnh.” Không một ai dám ngông cuồng, coi thường sức mạnh của Triệu Vân.`,
-    }
-  ]);
+  // Khởi tạo state bằng dữ liệu gốc import từ file
+  const [characters, setCharacters] = useState(CHARACTERS_DATA);
 
   // ----------------------------------------------
   // 🎯 THÔNG TIN TRANG BỊ
@@ -559,7 +437,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
           >
             <div className="relative flex items-center justify-center">
               <img
-                src={char.thumb}
+                src={char.assets.portrait.list}
                 alt={char.name}
                 className="w-auto lg:h-85 object-cover"
               />
@@ -662,7 +540,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
         <div className="relative text-white rounded-xl overflow-hidden border-2 lg:border-15 border-white/1 min-h-[800px] lg:min-h-[650px] w-[100%] max-w-7xl bg-gray-900/95 p-4">
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${c.banner})` }}
+            style={{ backgroundImage: `url(${c.assets.portrait.banner})` }}
           />
           <div className="absolute inset-0 bg-black/60" />
 
@@ -671,7 +549,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
             <div className="flex flex-col items-center justify-center">
               <div className="relative">
                 <img
-                  src={c.thumb}
+                  src={c.assets.portrait.list}
                   alt={c.name}
                   className="w-auto max-h-[150px] lg:max-h-[350px] object-contain rounded-xl border border-white/20 shadow-lg"
                 />
@@ -771,7 +649,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
                     >
                       {/* Ảnh kỹ năng */}
                       <img
-                        src={s.img}
+                        src={s.visuals.icon}
                         alt={s.title}
                         className="w-12 h-12 lg:w-16 lg:h-16 rounded-full border border-white/30 object-cover"
                       />
@@ -1115,7 +993,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
                     }`}
                 >
                   {/* Ảnh tướng */}
-                  <img src={c.thumb} alt={c.name} className="w-full h-full object-cover btn" />
+                  <img src={c.assets.portrait.play} alt={c.name} className="w-full h-full object-cover btn" />
 
                   {/* Vũ khí góc phải */}
                   {c.mainWeapon && (
@@ -1183,7 +1061,7 @@ export default function Box8Nav({ activeModal, closeModal }) {
                   >
                     {char ? (
                       <>
-                        <img src={char.thumb} alt={char.name} className="object-cover w-full h-full btn" />
+                        <img src={char.assets.portrait.list} alt={char.name} className="object-cover w-full h-full btn" />
 
                         {/* Vũ khí góc phải */}
                         {char.mainWeapon && (
