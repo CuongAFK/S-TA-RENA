@@ -11,58 +11,6 @@ import crosshairIcon from '../assets/icons/crosshair.png';
 import { Character, TurnManager, executeAction, runEnemyAI } from '../game/CombatEngine';
 
 // =========================================================================================
-// 🛠️ COMPONENT UI PHỤ TRỢ
-// =========================================================================================
-
-// Component hiển thị thanh chỉ số (HP/Mana) với vạch chia & số liệu
-const StatBar = ({ current, max, colorClass, showSeparators = false, height = "h-full" }) => {
-    // 1. Tính phần trăm độ rộng
-    const percent = Math.max(0, Math.min(100, (current / max) * 100));
-
-    // 2. Logic tạo vạch ngăn cách (Mỗi 20 điểm = 1 vạch)
-    const separators = [];
-    if (showSeparators && max > 0) {
-        const step = 20;
-        const count = Math.floor(max / step);
-
-        // Chỉ vẽ nếu số lượng vạch hợp lý (dưới 100 vạch để tránh nát UI nếu máu quá trâu)
-        if (count < 100) {
-            for (let i = 1; i <= count; i++) {
-                const leftPos = (i * step / max) * 100;
-                // Chỉ vẽ nếu vạch chưa chạm lề phải (99%)
-                if (leftPos < 99) {
-                    separators.push(
-                        <div
-                            key={i}
-                            className="absolute top-0 bottom-0 w-[1px] bg-black/30 z-10"
-                            style={{ left: `${leftPos}%` }}
-                        />
-                    );
-                }
-            }
-        }
-    }
-
-    return (
-        <div className={`${height} w-full relative bg-gray-900 rounded-[1px] overflow-hidden border border-white/10 shadow-inner group`}>
-            {/* Thanh màu nền (HP/Mana) */}
-            <div className={`h-full transition-all duration-300 ${colorClass}`} style={{ width: `${percent}%` }} />
-
-            {/* Render các vạch chia */}
-            {separators}
-
-            {/* 3. Hiển thị Số (Overlay Text) */}
-            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                {/* Dùng text-shadow để số nổi rõ trên nền màu */}
-                <span className="text-[8px] sm:text-[9px] font-bold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none font-mono tracking-tighter opacity-90">
-                    {Math.ceil(current)}/{max}
-                </span>
-            </div>
-        </div>
-    );
-};
-
-// =========================================================================================
 // ⚙️ CẤU HÌNH VISUAL
 // =========================================================================================
 
@@ -107,119 +55,70 @@ const KEY_CONFIGS = {
     BLACK: {
         color: [0, 0, 0],
         tolerance: 30,
-        smooth: 10,
         correction: 1.0,
     },
     // Cấu hình cho Video Tấn Công (Nền Xanh Lá)
     GREEN: {
-        color: [0, 255, 0], // Màu xanh lá chuẩn (hoặc [0, 255, 0] rgb(0, 255, 0))
-        tolerance: 200,      // Dung sai lớn hơn vì màu xanh dễ tách
-        smooth: 50,
+        color: [20, 255, 8], // Màu xanh lá chuẩn (hoặc [0, 255, 0] rgb(20, 255, 8))
+        tolerance: 170,      // Dung sai lớn hơn vì màu xanh dễ tách
         correction: 1.0,     // Giữ nguyên độ sáng
     }
 };
 
-// src/pages/CombatPage.jsx
-
-const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, combatPhase, onComplete }) => {
+const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, combatPhase }) => {
     if (!unit || unit.isDead) return null;
 
     const canvasRef = useRef(null);
     const videoRef = useRef(null);
     const frameIdRef = useRef(null);
     const lastTimeRef = useRef(0);
-    const playPromiseRef = useRef(null);
-    const keyTypeRef = useRef('BLACK');
+    const playPromiseRef = useRef(null); // Quản lý Promise play
 
-    // --- 1. XÁC ĐỊNH LOGIC VIDEO & THỜI GIAN CẮT ---
+    // --- 1. XÁC ĐỊNH LOGIC (GIỮ NGUYÊN) ---
     let activeVideoSrc = null;
     let isLoop = true;
-    let keyType = 'BLACK';
+    let keyType = 'BLACK'; 
     let isFullScreenAnim = false;
-    let startTime = 0; // <--- MỚI: Mặc định chạy từ đầu
 
     if (isActive && !isEnemy) {
         if (combatPhase === 'EXECUTING') {
-            activeVideoSrc = unit.assets?.action?.normalAttack;
+            activeVideoSrc = unit.assets?.action?.normalAttack; 
             isLoop = false;
-            keyType = 'GREEN';
-            isFullScreenAnim = true;
-
-            // --- LOGIC CẮT VIDEO ---
-            // 1. Lấy stack hiện tại (nếu undefined thì coi là 0)
-            const currentStacks = unit.stacks || 0;
-
-            // 2. Kiểm tra có phải đòn cường hóa không (Do Engine trả về)
-            // Nếu có enhancedType (RED/BLUE/YELLOW) HOẶC đủ 3 stack -> Là Cường hóa
-            const isEnhanced = (currentStacks >= 3) || (!!unit.enhancedType);
-
-            // 3. Quyết định tua:
-            // - Nếu là Cường hóa/Chiến kỹ: start = 0 (Gồng + Ném)
-            // - Nếu là Đánh thường yếu: start = 1.5 (Chỉ ném)
-            if (isEnhanced) {
-                startTime = 0;
-                console.log("🔥 Đòn Cường Hóa: Full Video");
-            } else {
-                startTime = 1.7; // <--- SỐ GIÂY MUỐN TUA (Chỉnh tại đây)
-                console.log("🔹 Đánh thường: Skip Charge");
-            }
-
+            keyType = 'GREEN'; 
+            isFullScreenAnim = true; 
         } else if (unit.assets?.action?.ready) {
-            // Video Ready Loop
             activeVideoSrc = unit.assets.action.ready;
             isLoop = true;
             keyType = 'BLACK';
-            startTime = 0;
         }
     }
 
     const shouldPlayVideo = !!activeVideoSrc;
-    keyTypeRef.current = keyType;
 
-    // --- LOGIC TÍNH TOÁN FILTER MÀU (MONOCHROME ENERGY) ---
-    // Sepia(1) đưa về nâu vàng -> Saturate tăng đậm -> Hue Rotate xoay sang màu cần thiết
-    let filterStyle = "";
-    
-    if (isActive && combatPhase === 'EXECUTING') {
-        const type = unit.enhancedType || 'BLUE'; 
-        
-        if (type === 'RED') {
-            // Nâu vàng (-50 độ) -> Đỏ rực
-            filterStyle = "sepia(1) saturate(5) hue-rotate(-50deg) drop-shadow(0 0 10px rgba(255, 50, 50, 0.8))";
-        } else if (type === 'YELLOW') {
-            // Nâu vàng (giữ nguyên) -> Tăng sáng
-            filterStyle = "sepia(1) saturate(4) brightness(1.2) drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))";
-        } else {
-            // Mặc định (Blue) - Giữ nguyên màu gốc video (đẹp nhất) hoặc xoay nếu muốn
-            filterStyle = "drop-shadow(0 0 10px #3b82f6)"; 
-        }
-    } else if (isActive) {
-        // Trạng thái Ready
-        filterStyle = "drop-shadow(0 0 1px rgb(0, 0, 0)) drop-shadow(0 0 10px rgba(48, 48, 48, 0.8))";
-    } else if (isTarget) {
-        filterStyle = "drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 10px #b91c1c)";
-    } else if (isEnemy) {
-        filterStyle = "drop-shadow(0 0 2px rgba(255, 0, 0, 0.5))";
-    } else {
-        filterStyle = "drop-shadow(0 0 2px rgba(0, 255, 255, 0.5))";
-    }
+    // 🔥 FIX 1: Dùng Ref để lưu keyType hiện tại
+    // Giúp hàm draw không cần phụ thuộc vào biến keyType, tránh re-render loop
+    const keyTypeRef = useRef(keyType);
+    keyTypeRef.current = keyType; // Luôn cập nhật giá trị mới nhất mỗi lần render
 
-    // --- 2. LOGIC CANVAS DRAW (ĐÃ NÂNG CẤP KHỬ RĂNG CƯA) ---
+    // --- 2. LOGIC CANVAS (ĐÃ TÁCH KHỎI DEPENDENCY) ---
     const drawVideoOnCanvas = useCallback((timestamp) => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
+
         if (!video || !canvas || video.paused || video.ended) {
+            // Vẫn request frame để chờ video chạy lại
             frameIdRef.current = requestAnimationFrame(drawVideoOnCanvas);
             return;
         }
+
         const interval = 1000 / 30; // 30 FPS
         const elapsed = timestamp - lastTimeRef.current;
 
         if (elapsed > interval) {
             lastTimeRef.current = timestamp - (elapsed % interval);
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-            // Giữ nguyên logic scale cũ của bạn
+            
+            // Render size (giảm scale để tối ưu)
             const scaleFactor = 0.5;
             const w = (video.videoWidth || 1280) * scaleFactor;
             const h = (video.videoHeight || 720) * scaleFactor;
@@ -230,56 +129,33 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
             }
 
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+            
+            // XỬ LÝ CHROMA KEY
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
             const len = data.length;
-
+            
+            // 🔥 Lấy config từ Ref thay vì biến trực tiếp
             const currentKeyType = keyTypeRef.current;
             const config = KEY_CONFIGS[currentKeyType] || KEY_CONFIGS.BLACK;
-
+            
             const keyR = config.color[0];
             const keyG = config.color[1];
             const keyB = config.color[2];
+            const tolSq = config.tolerance * config.tolerance;
             const correction = config.correction;
-
-            // Lấy thông số Tolerance và Smooth
-            const tol = config.tolerance;
-            const smooth = config.smooth || 0;
-
-            // Tính bình phương để so sánh nhanh hơn trong vòng lặp (tránh dùng Math.sqrt)
-            const tolSq = tol * tol;
-            const maxDistSq = (tol + smooth) * (tol + smooth);
-            const smoothRange = maxDistSq - tolSq; // Khoảng đệm để làm mượt
 
             for (let i = 0; i < len; i += 4) {
                 const r = data[i];
                 const g = data[i + 1];
                 const b = data[i + 2];
 
-                // Tính khoảng cách màu (Euclidean distance squared)
-                const distSq = (r - keyR) * (r - keyR) + (g - keyG) * (g - keyG) + (b - keyB) * (b - keyB);
+                // Khoảng cách màu Euclid bình phương
+                const distSq = (r - keyR)*(r - keyR) + (g - keyG)*(g - keyG) + (b - keyB)*(b - keyB);
 
                 if (distSq < tolSq) {
-                    // 1. Nằm trọn trong vùng màu nền -> Xóa hoàn toàn
-                    data[i + 3] = 0;
-                }
-                else if (smooth > 0 && distSq < maxDistSq) {
-                    // 2. Nằm ở vùng biên (Răng cưa nằm ở đây) -> Làm mờ dần (Alpha blending)
-                    // Tính tỷ lệ xa dần khỏi màu nền (0 -> 1)
-                    const factor = (distSq - tolSq) / smoothRange;
-                    // Gán độ trong suốt dựa trên tỷ lệ đó (càng xa màu nền càng rõ)
-                    data[i + 3] = Math.floor(255 * factor);
-
-                    // (Tùy chọn) Chỉnh màu pixel biên để đỡ bị ám xanh
-                    if (correction !== 1.0) {
-                        data[i] *= correction;
-                        data[i + 1] *= correction;
-                        data[i + 2] *= correction;
-                    }
-                }
-                else if (correction !== 1.0) {
-                    // 3. Vùng nhân vật -> Giữ nguyên (chỉ chỉnh sáng nếu cần)
+                    data[i + 3] = 0; // Xóa nền
+                } else if (correction !== 1.0) {
                     data[i] = Math.min(255, r * correction);
                     data[i + 1] = Math.min(255, g * correction);
                     data[i + 2] = Math.min(255, b * correction);
@@ -287,44 +163,47 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
             }
             ctx.putImageData(imageData, 0, 0);
         }
+        
         frameIdRef.current = requestAnimationFrame(drawVideoOnCanvas);
-    }, []);
+    }, []); // 🔥 Dependency rỗng: Hàm này không bao giờ bị tạo lại!
 
+    // --- 3. QUẢN LÝ VIDEO (FIX SPAM LOOP) ---
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !shouldPlayVideo) return;
 
         let isCancelled = false;
+        console.log(`🎬 [SETUP] Load video: ${activeVideoSrc}`);
 
-        // Hàm chạy khi video kết thúc
-        const handleVideoEnded = () => {
-            if (isActive && combatPhase === 'EXECUTING' && onComplete) {
-                // Đợi 1 chút (300ms) cho người chơi nhìn pose cuối rồi mới tắt
-                setTimeout(() => {
-                    if (!isCancelled) onComplete();
-                }, 300); 
+        const startVideo = async () => {
+            if (isCancelled) return;
+            try {
+                // Nếu đang có lệnh play nào chưa xong thì đợi nó
+                if (playPromiseRef.current) await playPromiseRef.current;
+                
+                console.log("▶️ [ACTION] Play video");
+                playPromiseRef.current = video.play();
+                await playPromiseRef.current;
+                playPromiseRef.current = null; // Reset khi xong
+            } catch (err) {
+                if (err.name !== 'AbortError') console.warn("Video play error:", err);
             }
         };
 
-        const handlePlaySequence = async () => {
-            if (isCancelled) return;
-            try {
-                if (startTime > 0) video.currentTime = startTime;
-                await video.play();
-            } catch (err) { /* ignore */ }
-        };
+        const onCanPlay = () => startVideo();
 
-        const onLoadedData = () => handlePlaySequence();
-
-        // RESET & SETUP
-        video.pause();
-        video.currentTime = 0;
+        // Setup event
+        video.addEventListener('canplay', onCanPlay);
         
-        video.addEventListener('loadeddata', onLoadedData);
-        video.addEventListener('ended', handleVideoEnded); // <--- QUAN TRỌNG: BẮT SỰ KIỆN KẾT THÚC
-        
+        // Load source mới
         video.load();
+        
+        // Check ngay lập tức nếu video đã sẵn sàng (do cache)
+        if (video.readyState >= 3) {
+            startVideo();
+        }
 
+        // Khởi động vòng lặp canvas (Chỉ 1 lần duy nhất)
         if (!frameIdRef.current) {
             lastTimeRef.current = performance.now();
             frameIdRef.current = requestAnimationFrame(drawVideoOnCanvas);
@@ -332,51 +211,40 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
 
         return () => {
             isCancelled = true;
-            video.removeEventListener('loadeddata', onLoadedData);
-            video.removeEventListener('ended', handleVideoEnded); // <--- Dọn dẹp
-            video.pause();
+            video.removeEventListener('canplay', onCanPlay);
+            // Không cancel frameIdRef ở đây để tránh nhấp nháy đen khi đổi src, 
+            // logic trong drawVideoOnCanvas sẽ tự handle khi video paused/changed
+            if (playPromiseRef.current) {
+                playPromiseRef.current.then(() => video.pause()).catch(() => {});
+            } else {
+                video.pause();
+            }
         };
-    }, [activeVideoSrc, shouldPlayVideo, startTime]); // Trigger khi video đổi
+        // 🔥 QUAN TRỌNG: Bỏ drawVideoOnCanvas ra khỏi dependency
+    }, [activeVideoSrc, shouldPlayVideo]);
 
-
-    // --- 4. RENDER MEDIA & GLOW (ĐÃ SỬA) ---
-
-    // Logic chọn class Glow
-    let glowClass = "";
-
-    if (isActive) {
-        if (isFullScreenAnim) {
-            // 🔥 TRƯỜNG HỢP 1: ĐANG TẤN CÔNG (FULL MÀN HÌNH)
-            // Dùng class mới sáng rực rỡ hơn
-            glowClass = "glow-attack";
-        } else {
-            // 🟡 TRƯỜNG HỢP 2: ĐANG CHỜ (READY)
-            // Dùng class cũ (Vàng nhẹ + viền đen)
-            glowClass = "glow-active";
-        }
-    }
-    else if (isTarget) glowClass = "glow-target"; // Đỏ nháy
-    else if (isEnemy) glowClass = "glow-enemy";   // Đỏ viền
-    else glowClass = "glow-player";               // Xanh viền
-
+    // --- 4. RENDER MEDIA ---
     let mediaContent;
     if (shouldPlayVideo) {
         mediaContent = (
             <div className="w-full h-full relative">
+                {/* VIDEO ẨN: Thêm opacity 0.01 thay vì 0 để tránh trình duyệt "ngủ đông" video này */}
                 <video
                     ref={videoRef}
                     src={activeVideoSrc}
                     loop={isLoop}
                     muted playsInline
+                    // Quan trọng: width/height auto để lấy kích thước gốc
                     style={{ position: 'absolute', opacity: 0.01, pointerEvents: 'none', zIndex: -1 }}
                 />
+
+                {/* CANVAS HIỂN THỊ */}
                 <canvas
                     ref={canvasRef}
-                    // Thêm glowClass vào đây để Canvas nhận hiệu ứng bóng
-                    className={`w-full h-full object-contain pointer-events-none transition-all duration-300 ${glowClass}`}
+                    className="w-full h-full object-contain drop-shadow-lg pointer-events-none"
+                    // Nếu là Full Screen -> scale to ra, Nếu là Ready -> scale vừa
                     style={{
                         transform: isFullScreenAnim ? 'scale(1)' : 'scale(1.2)',
-                        filter: filterStyle,
                     }}
                 />
             </div>
@@ -385,20 +253,13 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
         const imgSrc = (combatPhase === 'EXECUTING' && (isActive || isTarget)) || combatPhase === 'SELECT_TARGET'
             ? unit.assets.portrait.play
             : unit.assets.portrait.list;
-
         mediaContent = (
-            <img
-                src={imgSrc}
-                alt={unit.name}
-                className={`w-full h-full object-contain transition-all duration-300 ${glowClass}`}
-                style={{ filter: filterStyle }}
-            />
+            <img src={imgSrc} alt={unit.name} className="w-full h-full object-contain drop-shadow-lg" />
         );
     }
 
-
-
-    // --- 5. STYLE & VỊ TRÍ ---
+    // --- 5. STYLE ĐỘNG (XỬ LÝ FULL MÀN HÌNH) ---
+    // Mặc định
     let dynamicStyle = {
         top: `${position.top}%`,
         left: `${position.left}%`,
@@ -409,8 +270,10 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
         transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)'
     };
 
+    // LOGIC CHUYỂN VỊ TRÍ
     if (combatPhase === 'SELECT_TARGET') {
         if (!isEnemy && isActive) {
+            // Zoom nhân vật ta khi chọn skill
             dynamicStyle.left = '20%'; dynamicStyle.top = '55%';
             dynamicStyle.transform = `translate(-50%, -50%) scale(2.2)`;
             dynamicStyle.zIndex = 100;
@@ -419,59 +282,60 @@ const CombatUnit = ({ unit, position, isEnemy, isActive, isTarget, onClick, comb
         }
     }
 
+    // LOGIC FULL MÀN HÌNH KHI TẤN CÔNG
     if (combatPhase === 'EXECUTING') {
         if (isActive && isFullScreenAnim) {
+            // BIẾN THÀNH FULL MÀN HÌNH (CINEMATIC)
+            // Ghi đè toàn bộ style cũ
             dynamicStyle = {
-                position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                zIndex: 9999, opacity: 1, transform: 'none', transition: 'opacity 0.3s ease'
+                position: 'fixed', // Thoát khỏi dòng chảy document
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                zIndex: 9999, // Lên trên cùng
+                opacity: 1,
+                transform: 'none', // Không scale/translate nữa
+                transition: 'opacity 0.3s ease'
             };
         } else if (isTarget) {
-            dynamicStyle.zIndex = 90;
+            dynamicStyle.zIndex = 90; // Mục tiêu giữ nguyên
         } else {
             dynamicStyle.left = isEnemy ? '150%' : '-50%'; dynamicStyle.opacity = 0;
         }
     }
 
+    let glowClass = "glow-hover";
+    if (isActive) glowClass = "glow-active";
+    else if (isTarget) glowClass = "glow-target";
+    else if (isEnemy) glowClass = "glow-enemy";
+    else glowClass = "glow-player";
+
+    // Ẩn thanh máu/glow khi đang chiếu phim Full màn hình
     const hideUI = isFullScreenAnim && isActive;
 
     return (
         <div onClick={onClick} className={`absolute flex flex-col items-center group ${isFullScreenAnim ? '' : 'transition-all'}`} style={dynamicStyle}>
-
             {/* CONTAINER MEDIA */}
-            <div className={`relative w-full ${isFullScreenAnim ? 'h-full' : 'aspect-square'} transition-all duration-300`}>
+            {/* Nếu là Full screen thì bỏ aspect-square để nó tự do theo màn hình */}
+            <div className={`relative w-full ${isFullScreenAnim ? 'h-full' : 'aspect-square'} transition-all duration-300 ${hideUI ? '' : glowClass}`}>
                 {mediaContent}
             </div>
 
-            {/* UI HP/MANA KẺ ĐỊCH */}
+            {/* UI PHỤ (Thanh máu, Tâm ngắm) - Ẩn khi Full Screen */}
             {!hideUI && isEnemy && (
-                <div className="absolute top-0 -translate-y-full mb-3 w-[150%] bg-black/80 px-2 py-2 rounded-md backdrop-blur-sm border border-red-500/30 flex flex-col gap-1 items-center z-20 pointer-events-none shadow-xl">
-                    <div className="text-[10px] text-red-300 font-bold uppercase tracking-wide mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-                        {unit.name}
+                <div className="absolute top-0 -translate-y-full mb-2 w-[140%] bg-black/80 px-1.5 py-1.5 rounded backdrop-blur-sm border border-red-500/30 flex flex-col gap-1 items-center z-20 pointer-events-none">
+                    <div className="h-2 w-full bg-gray-800 rounded-sm overflow-hidden border border-white/10 relative">
+                        <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${(unit.currentHp / unit.baseStats.maxHp) * 100}%` }} />
                     </div>
-
-                    <div className="h-2.5 w-full">
-                        <StatBar
-                            current={unit.currentHp}
-                            max={unit.baseStats.maxHp}
-                            colorClass="bg-red-600"
-                            showSeparators={true}
-                        />
-                    </div>
-
                     {unit.baseStats.maxMana > 0 && (
-                        <div className="h-1.5 w-full mt-0.5">
-                            <StatBar
-                                current={unit.currentMana}
-                                max={unit.baseStats.maxMana}
-                                colorClass="bg-blue-500"
-                                showSeparators={false}
-                            />
+                        <div className="h-1.5 w-full bg-gray-800 rounded-sm overflow-hidden border border-white/10 relative">
+                            <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${(unit.currentMana / unit.baseStats.maxMana) * 100}%` }} />
                         </div>
                     )}
                 </div>
             )}
 
-            {/* CROSSHAIR */}
             {!hideUI && isTarget && (
                 <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
                     <img src={crosshairIcon} alt="Target" className="w-24 h-24 animate-spin-slow drop-shadow-[0_0_10px_rgba(255,0,0,1)]" />
@@ -547,36 +411,26 @@ const ActionBar = ({ queue }) => {
 };
 
 const PartyStatusPanel = ({ team, activeUnitId }) => (
-    <div className="absolute bottom-6 left-6 flex gap-3 items-end z-30 pointer-events-auto">
+    <div className="absolute bottom-6 left-6 flex gap-3 items-end">
         {team.map((char) => {
             const isSelected = char.id === activeUnitId;
+            const hpPercent = (char.currentHp / char.baseStats.maxHp) * 100;
+            const manaPercent = (char.currentMana / (char.baseStats.maxMana || 100)) * 100;
             return (
-                <div key={char.id} className={`relative bg-gray-900/90 backdrop-blur-md border transition-all duration-300 p-1 flex flex-col gap-1 shadow-lg ${isSelected ? 'border-yellow-400 scale-105 -translate-y-2 shadow-[0_0_15px_rgba(250,204,21,0.3)]' : 'border-gray-600 hover:border-gray-400'}`} style={{ width: '80px' }}>
-
-                    {/* Portrait Area */}
-                    <div className="relative w-full h-[60px] bg-black overflow-hidden border border-white/5">
-                        <img src={char.assets.portrait.list} alt={char.name} className={`w-full h-full object-cover transition-opacity ${char.isDead ? 'opacity-40 grayscale' : 'opacity-100'}`} />
-                        {char.isDead && <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-red-500 font-bold text-[10px]">DEAD</div>}
+                <div key={char.id} className={`relative bg-gray-900/80 backdrop-blur-md border transition-all duration-300 p-1 ${isSelected ? 'border-yellow-400 scale-105 -translate-y-2' : 'border-gray-600'} ${char.isDead ? 'opacity-50 grayscale border-red-900' : ''}`} style={{ width: '80px', height: 'auto' }}>
+                    <div className="flex h-[80px]">
+                        <div className="flex-1 relative overflow-hidden bg-black">
+                            <img src={char.assets.portrait.list} alt={char.name} className="w-full h-full object-cover opacity-90" />
+                            {char.isDead && <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-red-500 font-bold text-xs">DEAD</div>}
+                        </div>
+                        <div className="w-2 h-full bg-gray-800 ml-0.5 relative flex flex-col justify-end">
+                            <div className="w-full bg-blue-500 transition-all duration-500" style={{ height: `${manaPercent}%` }} />
+                        </div>
                     </div>
-
-                    {/* HP Bar */}
-                    <div className="w-full h-3">
-                        <StatBar
-                            current={char.currentHp}
-                            max={char.baseStats.maxHp}
-                            colorClass={char.currentHp < char.baseStats.maxHp * 0.3 ? "bg-red-500 animate-pulse" : "bg-green-500"}
-                            showSeparators={true}
-                        />
+                    <div className="mt-1 w-full h-2 bg-gray-800 relative">
+                        <div className={`h-full transition-all duration-300 ${hpPercent < 30 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} style={{ width: `${hpPercent}%` }} />
                     </div>
-
-                    {/* Mana Bar */}
-                    <div className="w-full h-2">
-                        <StatBar
-                            current={char.currentMana}
-                            max={char.baseStats.maxMana || 100}
-                            colorClass="bg-blue-500"
-                        />
-                    </div>
+                    <div className="absolute -bottom-4 left-0 w-full text-center text-[9px] text-gray-300 font-mono">{Math.ceil(char.currentHp)}/{char.baseStats.maxHp}</div>
                 </div>
             );
         })}
@@ -852,35 +706,30 @@ const CombatPage = () => {
         }
     };
 
-    // 1. Tạo hàm xử lý khi hành động kết thúc (để truyền xuống con)
-    const handleActionComplete = useCallback(() => {
-        console.log("🎬 Action Complete -> Back to IDLE");
-        setCombatPhase('IDLE');
-        
-        // Gọi hàm kết thúc lượt của Engine
-        endCurrentTurn();
-    }, []);
-
-    // 2. Sửa confirmAttack: BỎ SET TIMEOUT ĐI
     const confirmAttack = () => {
         if (!activeTargetId || !selectedSkillType) return;
 
+        // Tìm đối tượng thật
         const allUnits = [...playerTeamRef.current, ...enemyTeamRef.current];
         const activeUnit = allUnits.find(u => u.id === activeUnitId);
         const targetUnit = allUnits.find(u => u.id === activeTargetId);
 
         if (!activeUnit || !targetUnit || targetUnit.isDead) return;
 
-        // Trừ SP
+        // Validate lại SP
         if (selectedSkillType === 'skill' && skillPoints < 1) return;
-        if (selectedSkillType === 'skill') setSkillPoints(p => p - 1);
-        if (selectedSkillType === 'normal') setSkillPoints(p => Math.min(p + 1, 5));
 
         // BẮT ĐẦU DIỄN HOẠT
         setCombatPhase('EXECUTING');
         executeActionAndSync(activeUnit, targetUnit, selectedSkillType);
 
-        
+        if (selectedSkillType === 'skill') setSkillPoints(p => p - 1);
+        if (selectedSkillType === 'normal') setSkillPoints(p => Math.min(p + 1, 5));
+
+        setTimeout(() => {
+            setCombatPhase('IDLE');
+            endCurrentTurn();
+        }, 2000); // 2s để xem animation
     };
 
     // --- KEYBOARD CONTROLS (PHÍM TẮT) ---
@@ -962,7 +811,6 @@ const CombatPage = () => {
                             isTarget={activeTargetId === unit.id} // Truyền prop isTarget
                             combatPhase={combatPhase} // Truyền Phase xuống để xử lý visual
                             onClick={() => handleTargetClick(unit)}
-                            onComplete={handleActionComplete}
                         />
                     </div>
                 ))}
@@ -976,7 +824,6 @@ const CombatPage = () => {
                             isActive={activeUnitId === unit.id}
                             isTarget={false} // Đồng minh không phải target (trừ skill buff, tính sau)
                             combatPhase={combatPhase}
-                            onComplete={handleActionComplete}
                         />
                     </div>
                 ))}

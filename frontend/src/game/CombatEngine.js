@@ -28,6 +28,11 @@ export class Character {
         
         // Action Value: Dùng để tính lượt đi (Càng thấp càng đi trước)
         this.actionValue = 0; 
+
+
+        // --- LOGIC RIÊNG (CUSTOM STATES) ---
+        this.stacks = 0;          // Số tích lũy nội tại (Valhein: 0 -> 3)
+        this.enhancedType = null; // Loại cường hóa hiện tại: 'RED', 'YELLOW', 'BLUE', hoặc null
     }
 
     // Tính toán lại chỉ số (Gọi khi hết lượt hoặc khi nhận Buff)
@@ -148,23 +153,83 @@ export class TurnManager {
 // 3. HÀM THỰC THI HÀNH ĐỘNG (EXECUTION LOGIC)
 // Xử lý logic combat: Damage, Heal, SP...
 // =========================================================================================
-export const executeAction = (attacker, defender, type) => {
-    // 1. Tính toán Sát thương
-    let damage = attacker.combatStats.physicalDamage;
-    
-    // Logic hệ số skill (Hardcode tạm thời)
-    if (type === 'skill') damage *= 1.5;      // Skill gây 150% dmg
-    if (type === 'ultimate') damage *= 2.5;   // Ulti gây 250% dmg
+// src/game/CombatEngine.js
 
-    // 2. Gọi hàm trừ máu của đối tượng Model
-    // Hàm này sẽ thay đổi giá trị currentHp bên trong object defender
+export const executeAction = (attacker, defender, type) => {
+    // 1. Logic riêng cho Valhein
+    if (attacker.key === 'valhein') {
+        return handleValheinAction(attacker, defender, type);
+    }
+
+    // ... (Logic mặc định cho các tướng khác giữ nguyên hoặc viết hàm riêng tương tự) ...
+    // Fallback cơ bản cũ
+    let damage = attacker.combatStats.physicalDamage;
+    defender.takeDamage(damage);
+    return { actualDmg: damage, isDead: defender.isDead, type };
+};
+
+// --- HÀM XỬ LÝ RIÊNG CHO VALHEIN ---
+const handleValheinAction = (attacker, defender, type) => {
+    let damage = attacker.combatStats.physicalDamage;
+    let effectLog = "Normal";
+    let glowColor = "YELLOW"; // Mặc định màu vàng (hoặc lấy từ enhancedType)
+
+    // A. XỬ LÝ CHIẾN KỸ (SKILL) HOẶC ĐÁNH THƯỜNG ĐỦ STACK
+    // Cơ chế: Random ra phi tiêu Đỏ/Vàng/Xanh
+    const isEnhanced = (type === 'skill') || (attacker.stacks >= 3);
+
+    if (isEnhanced) {
+        // Nếu chưa có loại cường hóa (do chưa random), thì random ngay tại đây
+        // (Hoặc logic game của bạn là random từ khi tích đủ stack, ở đây ta random lúc bắn)
+        const randomType = ['RED', 'YELLOW', 'BLUE'][Math.floor(Math.random() * 3)];
+        attacker.enhancedType = randomType;
+
+        // Tính toán hiệu ứng
+        switch (randomType) {
+            case 'RED': // Lan damage (Ví dụ)
+                damage *= 1.4; 
+                effectLog = "Đạn Đỏ (AoE)";
+                break;
+            case 'YELLOW': // Choáng
+                damage *= 1.0; 
+                effectLog = "Đạn Vàng (Stun)";
+                // TODO: Add stun logic here
+                break;
+            case 'BLUE': // Hồi SP/Mana
+                damage *= 1.2; 
+                effectLog = "Đạn Xanh (Hồi SP)";
+                break;
+        }
+
+        // Reset stack sau khi bắn cường hóa
+        attacker.stacks = 0; 
+        
+        // Chiến kỹ thì không tăng stack, nhưng Đánh thường cường hóa (Nội tại) thì CÓ tăng lại 1 stack (theo mô tả game gốc)
+        // Nhưng ở đây tạm thời reset về 0 để dễ test.
+    } 
+    else {
+        // B. ĐÁNH THƯỜNG CƠ BẢN
+        attacker.stacks += 1;
+        attacker.enhancedType = null; // Không có màu đặc biệt
+        effectLog = `Tích stack: ${attacker.stacks}`;
+    }
+
+    // Ulti thì tăng dame cực to
+    if (type === 'ultimate') damage *= 2.5;
+
+    // Trừ máu
     const actualDmg = defender.takeDamage(damage);
 
-    // Trả về thông tin để Log hoặc hiển thị Floating Text
     return {
         actualDmg,
         isDead: defender.isDead,
-        type: type
+        type: type,
+        // Trả về thêm thông tin visual để UI hiển thị
+        visualExtras: {
+            stacks: attacker.stacks,
+            enhancedType: attacker.enhancedType, // Để Component biết màu mà Glow
+            log: effectLog
+        }
     };
 };
 

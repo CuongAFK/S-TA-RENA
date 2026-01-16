@@ -319,6 +319,12 @@ button {
   transform: scale(1.15); /* Phóng to nhẹ */
 }
 
+/* MỚI: Glow dành riêng cho lúc Tấn Công (Full Screen) */
+.glow-attack {
+  filter: drop-shadow(0 0 10px rgb(0, 0, 0)) drop-shadow(0 0 10px rgba(52, 52, 52, 0.8));
+  z-index: 100 !important;
+}
+
 /* Hiệu ứng Mục tiêu (Target): Đỏ nhấp nháy mạnh */
 .glow-target {
   filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 10px #b91c1c);
